@@ -63,12 +63,12 @@ export function Navbar() {
               </button>
             </>
           ) : (
-            <button
-              onClick={handleLogin}
+            <Link
+              href="/auth/login"
               className="bg-[var(--accent)] text-white font-heading text-sm font-bold uppercase tracking-wider px-6 py-2.5 rounded-md hover:bg-[var(--accent-hover)] transition-colors"
             >
               Sign In
-            </button>
+            </Link>
           )}
         </div>
       </div>
