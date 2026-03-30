@@ -63,8 +63,8 @@ export default function TermsPage() {
           </p>
           <ul className="list-disc list-inside space-y-1 text-[var(--text-muted)] mb-3">
             <li>
-              The RDM-7 Marketplace charges a <strong className="text-[var(--text)]">10% platform fee</strong> on
-              all paid transactions. Creators receive 90% of the listed sale price.
+              The RDM-7 Marketplace charges a <strong className="text-[var(--text)]">15% platform fee</strong> on
+              all paid transactions. Creators receive 85% of the listed sale price.
             </li>
             <li>Payments are processed through Stripe. By selling on the platform, you agree to Stripe&apos;s terms of service.</li>
             <li>Creators must connect a valid Stripe account to receive payouts.</li>

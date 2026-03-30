@@ -31,7 +31,7 @@ async function stripeRequest<T = Record<string, unknown>>(
 }
 
 // ---------------------------------------------------------------------------
-// Checkout Session (Destination Charges with 10% platform fee)
+// Checkout Session (Destination Charges with 15% platform fee)
 // ---------------------------------------------------------------------------
 
 type CheckoutSession = {
@@ -46,7 +46,7 @@ export async function createCheckoutSession(
   buyerEmail: string,
   layoutName?: string
 ): Promise<CheckoutSession> {
-  const applicationFee = Math.round(priceInCents * 0.1); // 10% platform cut
+  const applicationFee = Math.round(priceInCents * 0.15); // 15% platform cut
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   const params: Record<string, string> = {

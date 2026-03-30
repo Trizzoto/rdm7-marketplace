@@ -222,13 +222,13 @@ function DashboardContent() {
               <p className="text-2xl font-heading font-bold">{totalSales}</p>
             </div>
             <div>
-              <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide mb-1">Your Earnings (90%)</p>
+              <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide mb-1">Your Earnings (85%)</p>
               <p className="text-2xl font-heading font-bold text-green-600">${totalEarnings.toFixed(2)}</p>
             </div>
             <div>
-              <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide mb-1">Platform Fee (10%)</p>
+              <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide mb-1">Platform Fee (15%)</p>
               <p className="text-2xl font-heading font-bold text-[var(--text-muted)]">
-                ${(totalEarnings / 9).toFixed(2)}
+                ${(totalEarnings / 5.667).toFixed(2)}
               </p>
             </div>
           </div>

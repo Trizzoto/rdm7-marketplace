@@ -31,7 +31,7 @@ const MOCK_NOTIFICATIONS: Notification[] = [
   {
     id: "3", type: "payment", title: "Payment Received — $4.50",
     message: 'Sale of "MoTeC Race Dash" — you earned $4.50.',
-    detail: 'A buyer purchased your "MoTeC Race Dash" layout for $5.00. After the 10% platform fee ($0.50), you received $4.50. Funds will be deposited to your connected Stripe account within 2 business days.',
+    detail: 'A buyer purchased your "MoTeC Race Dash" layout for $5.00. After the 15% platform fee ($0.75), you received $4.25. Funds will be deposited to your connected Stripe account within 2 business days.',
     read: false, createdAt: "2026-03-30T10:30:00Z", link: "/dashboard",
   },
   {

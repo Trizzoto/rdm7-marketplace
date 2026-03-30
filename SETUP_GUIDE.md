@@ -95,11 +95,11 @@ After updating, **redeploy** the project (Settings → Deployments → Redeploy)
 2. Click → redirected to Stripe Connect onboarding (Express account)
 3. Complete identity verification (takes 1-2 min)
 4. Once verified, they can set prices on their layouts
-5. Revenue split: **90% to seller, 10% platform fee**
+5. Revenue split: **85% to seller, 15% platform fee**
 6. Stripe handles all payouts to sellers automatically
 
 ### Platform Revenue:
-- 10% of every paid sale goes to your Stripe Connect platform account
+- 15% of every paid sale goes to your Stripe Connect platform account
 - View earnings in Stripe Dashboard → **Connect** → **Collected fees**
 
 ---

@@ -130,8 +130,8 @@ function OnboardingContent() {
           <div>
             <h3 className="font-heading text-lg font-bold uppercase mb-1">Earn Revenue</h3>
             <p className="text-sm text-[var(--text-muted)]">
-              Set your own prices for layouts and DBC files. You keep 90% of every sale.
-              The platform takes a 10% fee to cover hosting and payment processing.
+              Set your own prices for layouts and DBC files. You keep 85% of every sale.
+              The platform takes a 15% fee to cover hosting, payment processing, and platform maintenance.
             </p>
           </div>
         </div>
@@ -176,16 +176,16 @@ function OnboardingContent() {
             <span className="font-medium">$10.00</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-[var(--text-muted)]">Platform fee (10%)</span>
-            <span className="font-medium text-[var(--accent)]">-$1.00</span>
+            <span className="text-[var(--text-muted)]">Platform fee (15%)</span>
+            <span className="font-medium text-[var(--accent)]">-$1.50</span>
           </div>
           <div className="border-t border-[var(--border)] pt-3 flex justify-between">
             <span className="font-medium">Your earnings</span>
-            <span className="font-bold text-green-600">$9.00</span>
+            <span className="font-bold text-green-600">$8.50</span>
           </div>
         </div>
         <p className="text-xs text-[var(--text-muted)] mt-3">
-          Stripe processing fees (~2.9% + $0.30) are included in the platform fee.
+          Stripe processing fees (~1.75% + $0.30) are included in the platform fee.
         </p>
       </div>
 

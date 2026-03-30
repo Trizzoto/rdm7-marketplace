@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
         .single();
 
       const buyerId = buyerProfile?.id ?? null;
-      const platformFee = Math.round(amountTotal * 0.1);
+      const platformFee = Math.round(amountTotal * 0.15);
 
       // Insert purchase record
       const { error: purchaseErr } = await supabaseAdmin
