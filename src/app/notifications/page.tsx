@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 
 type NotificationType = "download" | "rating" | "payment" | "system";
 
@@ -9,51 +9,42 @@ interface Notification {
   type: NotificationType;
   title: string;
   message: string;
+  detail: string;
   read: boolean;
   createdAt: string;
+  link?: string;
 }
 
-// Mock data — will be replaced with Supabase realtime later
 const MOCK_NOTIFICATIONS: Notification[] = [
   {
-    id: "1",
-    type: "download",
-    title: "Layout Downloaded",
-    message: 'Your layout "MaxxECU Street Dash" was downloaded by a user.',
-    read: false,
-    createdAt: "2026-03-30T08:15:00Z",
+    id: "1", type: "download", title: "Layout Downloaded",
+    message: 'Your layout "MaxxECU Street Dash" was downloaded.',
+    detail: 'A user downloaded your "MaxxECU Street Dash" layout. This is your 47th download for this layout. Keep it up — popular layouts get featured on the homepage!',
+    read: false, createdAt: "2026-03-31T08:15:00Z", link: "/dashboard",
   },
   {
-    id: "2",
-    type: "rating",
-    title: "New Rating",
-    message: 'Someone rated your layout "Haltech Pro Gauge Set" 5 stars!',
-    read: false,
-    createdAt: "2026-03-29T16:42:00Z",
+    id: "2", type: "rating", title: "New 5-Star Rating",
+    message: '"Haltech Pro Gauge Set" received a 5-star review.',
+    detail: 'A user left a 5-star review on your "Haltech Pro Gauge Set" layout with the comment: "Perfect layout for track days, clean and easy to read at speed." Your average rating is now 4.8 stars.',
+    read: false, createdAt: "2026-03-30T16:42:00Z", link: "/dashboard",
   },
   {
-    id: "3",
-    type: "payment",
-    title: "Payment Received",
-    message: 'You received $4.50 for a sale of "MoTeC Race Dash".',
-    read: false,
-    createdAt: "2026-03-29T10:30:00Z",
+    id: "3", type: "payment", title: "Payment Received — $4.50",
+    message: 'Sale of "MoTeC Race Dash" — you earned $4.50.',
+    detail: 'A buyer purchased your "MoTeC Race Dash" layout for $5.00. After the 10% platform fee ($0.50), you received $4.50. Funds will be deposited to your connected Stripe account within 2 business days.',
+    read: false, createdAt: "2026-03-30T10:30:00Z", link: "/dashboard",
   },
   {
-    id: "4",
-    type: "system",
-    title: "Welcome to RDM-7 Marketplace",
-    message: "Your account is set up. Start uploading layouts or browsing the marketplace!",
-    read: true,
-    createdAt: "2026-03-28T09:00:00Z",
+    id: "4", type: "system", title: "Welcome to RDM-7 Marketplace",
+    message: "Your account is set up and ready to go.",
+    detail: "Welcome! You can now browse and download layouts, upload your own designs, and connect your Stripe account to sell premium layouts. Head to your Dashboard to get started.",
+    read: true, createdAt: "2026-03-28T09:00:00Z", link: "/dashboard",
   },
   {
-    id: "5",
-    type: "download",
-    title: "Layout Downloaded",
-    message: 'Your DBC file "BMW E90 CAN Database" was downloaded.',
-    read: true,
-    createdAt: "2026-03-27T14:20:00Z",
+    id: "5", type: "download", title: "DBC File Downloaded",
+    message: '"BMW E90 CAN Database" was downloaded.',
+    detail: 'Your DBC file "BMW E90 CAN Database" was downloaded by a user. This file has been downloaded 23 times total.',
+    read: true, createdAt: "2026-03-27T14:20:00Z",
   },
 ];
 
@@ -83,7 +74,7 @@ const typeIcons: Record<NotificationType, React.ReactNode> = {
 const typeColors: Record<NotificationType, string> = {
   download: "text-blue-500 bg-blue-50",
   rating: "text-yellow-500 bg-yellow-50",
-  payment: "text-green-500 bg-green-50",
+  payment: "text-green-600 bg-green-50",
   system: "text-gray-500 bg-gray-100",
 };
 
@@ -94,7 +85,6 @@ function formatTimeAgo(dateStr: string): string {
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMins / 60);
   const diffDays = Math.floor(diffHours / 24);
-
   if (diffMins < 1) return "Just now";
   if (diffMins < 60) return `${diffMins}m ago`;
   if (diffHours < 24) return `${diffHours}h ago`;
@@ -102,91 +92,242 @@ function formatTimeAgo(dateStr: string): string {
   return date.toLocaleDateString();
 }
 
+/* ── Swipeable Notification Row ───────────────────────────── */
+function SwipeableNotification({
+  notification, onDelete, onRead, expanded, onToggleExpand,
+}: {
+  notification: Notification;
+  onDelete: (id: string) => void;
+  onRead: (id: string) => void;
+  expanded: boolean;
+  onToggleExpand: (id: string) => void;
+}) {
+  const rowRef = useRef<HTMLDivElement>(null);
+  const startX = useRef(0);
+  const currentX = useRef(0);
+  const swiping = useRef(false);
+  const threshold = 80;
+
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    startX.current = e.touches[0].clientX;
+    currentX.current = 0;
+    swiping.current = true;
+  }, []);
+
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!swiping.current || !rowRef.current) return;
+    const dx = e.touches[0].clientX - startX.current;
+    // Only allow left swipe
+    if (dx > 10) { swiping.current = false; return; }
+    currentX.current = dx;
+    rowRef.current.style.transform = `translateX(${Math.max(dx, -140)}px)`;
+    rowRef.current.style.transition = 'none';
+  }, []);
+
+  const onTouchEnd = useCallback(() => {
+    if (!rowRef.current) return;
+    swiping.current = false;
+    if (currentX.current < -threshold) {
+      // Swipe far enough — animate out and delete
+      rowRef.current.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
+      rowRef.current.style.transform = 'translateX(-100%)';
+      rowRef.current.style.opacity = '0';
+      setTimeout(() => onDelete(notification.id), 300);
+    } else {
+      // Snap back
+      rowRef.current.style.transition = 'transform 0.2s ease-out';
+      rowRef.current.style.transform = 'translateX(0)';
+    }
+    currentX.current = 0;
+  }, [notification.id, onDelete]);
+
+  const handleClick = () => {
+    if (Math.abs(currentX.current) > 5) return; // was swiping, not clicking
+    if (!notification.read) onRead(notification.id);
+    onToggleExpand(notification.id);
+  };
+
+  return (
+    <div className="relative overflow-hidden rounded-card">
+      {/* Delete background (revealed on swipe) */}
+      <div className="absolute inset-0 bg-red-500 flex items-center justify-end px-6 rounded-card">
+        <div className="text-white flex items-center gap-2">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          <span className="text-sm font-bold uppercase">Delete</span>
+        </div>
+      </div>
+
+      {/* Swipeable content */}
+      <div
+        ref={rowRef}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onClick={handleClick}
+        className={`relative z-10 cursor-pointer select-none border transition-colors duration-200 ${
+          notification.read
+            ? "bg-[var(--surface)] border-[var(--border)] opacity-75"
+            : "bg-[var(--surface)] border-[var(--border)] hover:border-[var(--accent)] shadow-sm"
+        } ${expanded ? "rounded-t-card" : "rounded-card"}`}
+        style={{ willChange: 'transform' }}
+      >
+        <div className="flex items-start gap-3 p-4">
+          {/* Icon */}
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${typeColors[notification.type]}`}>
+            {typeIcons[notification.type]}
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className={`text-sm font-semibold ${notification.read ? "text-[var(--text-muted)]" : "text-[var(--text)]"}`}>
+                {notification.title}
+              </span>
+              {!notification.read && (
+                <span className="w-2 h-2 rounded-full bg-[var(--accent)] shrink-0 animate-pulse" />
+              )}
+            </div>
+            <p className="text-sm text-[var(--text-muted)] mt-0.5 line-clamp-1">
+              {notification.message}
+            </p>
+          </div>
+
+          {/* Time + chevron */}
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            <span className="text-xs text-[var(--text-muted)] whitespace-nowrap">
+              {formatTimeAgo(notification.createdAt)}
+            </span>
+            <svg
+              className={`w-4 h-4 text-[var(--text-muted)] transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      {/* Expanded detail */}
+      <div
+        className={`relative z-10 overflow-hidden transition-all duration-300 ease-in-out ${
+          expanded ? "max-h-60 opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div className="bg-[var(--surface)] border border-t-0 border-[var(--border)] rounded-b-card px-4 pb-4 pt-2">
+          <p className="text-sm text-[var(--text-muted)] leading-relaxed">
+            {notification.detail}
+          </p>
+          <div className="flex items-center justify-between mt-3 pt-3 border-t border-[var(--border)]">
+            <span className="text-xs text-[var(--text-muted)]">
+              {new Date(notification.createdAt).toLocaleString()}
+            </span>
+            <div className="flex gap-2">
+              {notification.link && (
+                <a
+                  href={notification.link}
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-xs font-medium text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
+                >
+                  View Details &rarr;
+                </a>
+              )}
+              <button
+                onClick={(e) => { e.stopPropagation(); onDelete(notification.id); }}
+                className="text-xs font-medium text-red-500 hover:text-red-700 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Main Page ────────────────────────────────────────────── */
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const markAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   };
 
   const markAllAsRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
+  const deleteNotification = (id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    if (expandedId === id) setExpandedId(null);
+  };
+
+  const toggleExpand = (id: string) => {
+    setExpandedId((prev) => (prev === id ? null : id));
+  };
+
   return (
-    <div>
+    <div className="max-w-2xl mx-auto">
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="font-heading text-3xl font-black uppercase tracking-wide">Notifications</h1>
           {unreadCount > 0 && (
             <p className="text-sm text-[var(--text-muted)] mt-1">
-              {unreadCount} unread notification{unreadCount !== 1 ? "s" : ""}
+              {unreadCount} unread
             </p>
           )}
         </div>
-        {unreadCount > 0 && (
-          <button
-            onClick={markAllAsRead}
-            className="text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
-          >
-            Mark all as read
-          </button>
-        )}
+        <div className="flex gap-3">
+          {unreadCount > 0 && (
+            <button
+              onClick={markAllAsRead}
+              className="text-xs font-medium text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
+            >
+              Mark all read
+            </button>
+          )}
+          {notifications.length > 0 && (
+            <button
+              onClick={() => setNotifications([])}
+              className="text-xs font-medium text-[var(--text-muted)] hover:text-red-500 transition-colors"
+            >
+              Clear all
+            </button>
+          )}
+        </div>
       </div>
 
+      {/* Swipe hint (mobile) */}
+      <p className="text-xs text-[var(--text-muted)] mb-4 sm:hidden">
+        Swipe left to delete &bull; Tap to expand
+      </p>
+
+      {/* Notifications */}
       {notifications.length === 0 ? (
         <div className="text-center py-20 bg-[var(--surface)] rounded-card border border-[var(--border)]">
           <svg className="w-12 h-12 mx-auto mb-4 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
-          <p className="font-heading text-lg font-bold uppercase">No Notifications</p>
-          <p className="text-sm text-[var(--text-muted)] mt-1">You&apos;re all caught up!</p>
+          <p className="font-heading text-lg font-bold uppercase">All Clear</p>
+          <p className="text-sm text-[var(--text-muted)] mt-1">No notifications to show.</p>
         </div>
       ) : (
         <div className="space-y-2">
-          {notifications.map((notification) => (
-            <button
-              key={notification.id}
-              onClick={() => markAsRead(notification.id)}
-              className={`w-full text-left flex items-start gap-4 p-4 rounded-card border transition-all duration-200 ${
-                notification.read
-                  ? "bg-[var(--surface)] border-[var(--border)] opacity-70"
-                  : "bg-[var(--surface)] border-[var(--border)] hover:border-[var(--accent)] shadow-sm"
-              }`}
-            >
-              {/* Icon */}
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                  typeColors[notification.type]
-                }`}
-              >
-                {typeIcons[notification.type]}
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className={`text-sm font-semibold ${notification.read ? "text-[var(--text-muted)]" : "text-[var(--text)]"}`}>
-                    {notification.title}
-                  </span>
-                  {!notification.read && (
-                    <span className="w-2 h-2 rounded-full bg-[var(--accent)] shrink-0" />
-                  )}
-                </div>
-                <p className="text-sm text-[var(--text-muted)] mt-0.5 truncate">
-                  {notification.message}
-                </p>
-              </div>
-
-              {/* Timestamp */}
-              <span className="text-xs text-[var(--text-muted)] whitespace-nowrap shrink-0">
-                {formatTimeAgo(notification.createdAt)}
-              </span>
-            </button>
+          {notifications.map((n) => (
+            <SwipeableNotification
+              key={n.id}
+              notification={n}
+              onDelete={deleteNotification}
+              onRead={markAsRead}
+              expanded={expandedId === n.id}
+              onToggleExpand={toggleExpand}
+            />
           ))}
         </div>
       )}
