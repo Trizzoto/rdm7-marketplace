@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { notFound } from "next/navigation";
 import type { Layout } from "@/lib/supabase";
-import { DownloadButton } from "@/components/DownloadButton";
+import { BuyButton } from "@/components/BuyButton";
 import { RatingSection } from "@/components/RatingSection";
 import Link from "next/link";
 
@@ -121,7 +121,7 @@ export default async function LayoutDetailPage({ params }: { params: Promise<{ i
             <div className="text-3xl font-heading font-bold text-[var(--accent)] mb-4">
               {layout.price === 0 ? "Free" : `$${layout.price.toFixed(2)}`}
             </div>
-            <DownloadButton layoutId={layout.id} rdmUrl={layout.rdm_url} name={layout.name} itemType={layout.item_type} />
+            <BuyButton layoutId={layout.id} rdmUrl={layout.rdm_url} name={layout.name} price={layout.price} itemType={layout.item_type} />
 
             <div className="mt-6 pt-6 border-t border-[var(--border)] space-y-3 text-sm text-[var(--text-muted)]">
               <div className="flex justify-between">

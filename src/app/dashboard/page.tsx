@@ -13,6 +13,12 @@ type Stats = {
   avgRating: number;
 };
 
+type PurchaseRow = {
+  amount_cents: number;
+  platform_fee_cents: number;
+  layout_id: string;
+};
+
 function DashboardContent() {
   const [userId, setUserId] = useState<string | null>(null);
   const [layouts, setLayouts] = useState<Layout[]>([]);
@@ -21,14 +27,69 @@ function DashboardContent() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"layout" | "dbc">("layout");
 
+  // Earnings state
+  const [totalEarnings, setTotalEarnings] = useState(0);
+  const [totalSales, setTotalSales] = useState(0);
+  const [stripeAccountId, setStripeAccountId] = useState<string | null>(null);
+
+  // Price editing state
+  const [editingPrice, setEditingPrice] = useState<string | null>(null);
+  const [priceInput, setPriceInput] = useState("");
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
         setUserId(data.user.id);
         fetchMyLayouts(data.user.id);
+        fetchEarnings(data.user.id);
+        fetchProfile(data.user.id);
       }
     });
   }, []);
+
+  const fetchProfile = async (uid: string) => {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("stripe_account_id")
+      .eq("id", uid)
+      .single();
+
+    if (profile?.stripe_account_id) {
+      setStripeAccountId(profile.stripe_account_id);
+    }
+  };
+
+  const fetchEarnings = async (uid: string) => {
+    // Get all layouts by this user
+    const { data: userLayouts } = await supabase
+      .from("layouts")
+      .select("id")
+      .eq("author_id", uid);
+
+    if (!userLayouts || userLayouts.length === 0) {
+      setTotalEarnings(0);
+      setTotalSales(0);
+      return;
+    }
+
+    const layoutIds = userLayouts.map((l) => l.id);
+
+    // Get purchases for these layouts
+    const { data: purchases } = await supabase
+      .from("purchases")
+      .select("amount_cents, platform_fee_cents, layout_id")
+      .in("layout_id", layoutIds);
+
+    if (purchases && purchases.length > 0) {
+      const rows = purchases as PurchaseRow[];
+      const earnings = rows.reduce(
+        (sum, p) => sum + (p.amount_cents - p.platform_fee_cents),
+        0
+      );
+      setTotalEarnings(earnings / 100);
+      setTotalSales(rows.length);
+    }
+  };
 
   const fetchMyLayouts = useCallback(async (uid: string) => {
     setLoading(true);
@@ -62,6 +123,28 @@ function DashboardContent() {
     if (userId) fetchMyLayouts(userId);
   };
 
+  const startEditPrice = (layout: Layout) => {
+    setEditingPrice(layout.id);
+    setPriceInput(layout.price.toString());
+  };
+
+  const savePrice = async (layoutId: string) => {
+    const newPrice = parseFloat(priceInput);
+    if (isNaN(newPrice) || newPrice < 0) {
+      alert("Please enter a valid price (0 for free)");
+      return;
+    }
+
+    await supabase
+      .from("layouts")
+      .update({ price: newPrice })
+      .eq("id", layoutId);
+
+    setEditingPrice(null);
+    setPriceInput("");
+    if (userId) fetchMyLayouts(userId);
+  };
+
   const filteredLayouts = layouts.filter((l) => l.item_type === activeTab);
   const layoutCount = layouts.filter((l) => l.item_type === "layout").length;
   const dbcCount = layouts.filter((l) => l.item_type === "dbc").length;
@@ -70,6 +153,7 @@ function DashboardContent() {
     { label: "TOTAL UPLOADS", value: stats.totalUploads.toString(), color: "var(--accent)" },
     { label: "TOTAL DOWNLOADS", value: stats.totalDownloads.toLocaleString(), color: "#2563EB" },
     { label: "AVG RATING", value: stats.avgRating > 0 ? stats.avgRating.toFixed(1) : "--", color: "#F59E0B" },
+    { label: "EARNINGS", value: totalEarnings > 0 ? `$${totalEarnings.toFixed(2)}` : "--", color: "#10B981" },
   ];
 
   if (loading) {
@@ -94,7 +178,7 @@ function DashboardContent() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {statCards.map((s) => (
           <div
             key={s.label}
@@ -108,6 +192,63 @@ function DashboardContent() {
             </p>
           </div>
         ))}
+      </div>
+
+      {/* Earnings Section */}
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-card p-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-heading text-xl font-bold uppercase">Earnings</h2>
+          {stripeAccountId ? (
+            <span className="flex items-center gap-1.5 text-xs font-medium text-green-600">
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Stripe Connected
+            </span>
+          ) : (
+            <Link
+              href="/creator/onboarding"
+              className="text-xs font-heading font-bold uppercase tracking-wider text-[var(--accent)] hover:underline"
+            >
+              Connect Stripe to Sell
+            </Link>
+          )}
+        </div>
+
+        {totalSales > 0 ? (
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide mb-1">Total Sales</p>
+              <p className="text-2xl font-heading font-bold">{totalSales}</p>
+            </div>
+            <div>
+              <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide mb-1">Your Earnings (90%)</p>
+              <p className="text-2xl font-heading font-bold text-green-600">${totalEarnings.toFixed(2)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide mb-1">Platform Fee (10%)</p>
+              <p className="text-2xl font-heading font-bold text-[var(--text-muted)]">
+                ${(totalEarnings / 9).toFixed(2)}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-6">
+            <p className="text-sm text-[var(--text-muted)] mb-2">No sales yet.</p>
+            {!stripeAccountId ? (
+              <p className="text-sm text-[var(--text-muted)]">
+                <Link href="/creator/onboarding" className="text-[var(--accent)] hover:underline font-medium">
+                  Connect your Stripe account
+                </Link>{" "}
+                to start selling layouts and DBC files.
+              </p>
+            ) : (
+              <p className="text-sm text-[var(--text-muted)]">
+                Set a price on your uploads to start earning.
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Upload Form */}
@@ -210,6 +351,50 @@ function DashboardContent() {
                     {l.is_published ? "Published" : "Draft"}
                   </span>
                 </div>
+              </div>
+
+              {/* Price */}
+              <div className="flex-shrink-0 w-28">
+                {editingPrice === l.id ? (
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm text-[var(--text-muted)]">$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={priceInput}
+                      onChange={(e) => setPriceInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") savePrice(l.id);
+                        if (e.key === "Escape") setEditingPrice(null);
+                      }}
+                      className="w-16 text-sm px-2 py-1 rounded border border-[var(--border)] bg-[var(--bg)] focus:outline-none focus:border-[var(--accent)]"
+                      autoFocus
+                    />
+                    <button
+                      onClick={() => savePrice(l.id)}
+                      className="text-green-600 hover:text-green-700 transition-colors"
+                      title="Save"
+                    >
+                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => startEditPrice(l)}
+                    className="text-sm font-medium hover:text-[var(--accent)] transition-colors"
+                    title="Click to set price"
+                  >
+                    {l.price === 0 ? (
+                      <span className="text-green-600">Free</span>
+                    ) : (
+                      <span>${l.price.toFixed(2)}</span>
+                    )}
+                    <span className="text-[10px] text-[var(--text-muted)] ml-1">(edit)</span>
+                  </button>
+                )}
               </div>
 
               {/* Actions */}

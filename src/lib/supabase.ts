@@ -34,5 +34,6 @@ export type Profile = {
   display_name: string;
   avatar_url: string | null;
   bio: string | null;
+  stripe_account_id: string | null;
   created_at: string;
 };
