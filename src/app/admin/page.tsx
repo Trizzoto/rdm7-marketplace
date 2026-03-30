@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Layout } from "@/lib/supabase";
 
-const ADMIN_EMAILS = ["admin@rdm7.com.au"];
+const ADMIN_EMAILS = ["tommyrosato@gmail.com"];
 
 type Stats = {
   totalLayouts: number;
