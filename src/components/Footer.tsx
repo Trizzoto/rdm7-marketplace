@@ -37,6 +37,21 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/trending" className="text-sm hover:text-white transition-colors">
+                  Trending
+                </Link>
+              </li>
+              <li>
+                <Link href="/new" className="text-sm hover:text-white transition-colors">
+                  New Arrivals
+                </Link>
+              </li>
+              <li>
+                <Link href="/collections" className="text-sm hover:text-white transition-colors">
+                  My Favorites
+                </Link>
+              </li>
+              <li>
                 <Link href="/dashboard" className="text-sm hover:text-white transition-colors">
                   Dashboard
                 </Link>
@@ -53,6 +68,11 @@ export function Footer() {
               <li>
                 <Link href="/about" className="text-sm hover:text-white transition-colors">
                   About
+                </Link>
+              </li>
+              <li>
+                <Link href="/changelog" className="text-sm hover:text-white transition-colors">
+                  Changelog
                 </Link>
               </li>
               <li>
