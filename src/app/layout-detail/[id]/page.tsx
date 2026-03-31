@@ -34,8 +34,11 @@ export default async function LayoutDetailPage({ params }: { params: Promise<{ i
   if (!layout) notFound();
 
   const relatedLayouts = await getRelatedLayouts(layout);
-  const sizeMB = (layout.file_size_bytes / 1048576).toFixed(1);
+  const sizeKB = (layout.file_size_bytes / 1024).toFixed(1);
   const isDbc = layout.item_type === "dbc";
+  const uploadDate = new Date(layout.created_at).toLocaleDateString("en-AU", {
+    day: "numeric", month: "short", year: "numeric",
+  });
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -134,19 +137,13 @@ export default async function LayoutDetailPage({ params }: { params: Promise<{ i
                   <span className="font-medium text-[var(--text)]">{layout.widget_count}</span>
                 </div>
               )}
-              {!isDbc && (
-                <div className="flex justify-between">
-                  <span>Signals</span>
-                  <span className="font-medium text-[var(--text)]">{layout.signal_count}</span>
-                </div>
-              )}
               <div className="flex justify-between">
                 <span>File Size</span>
-                <span className="font-medium text-[var(--text)]">{sizeMB} MB</span>
+                <span className="font-medium text-[var(--text)]">{sizeKB} KB</span>
               </div>
               <div className="flex justify-between">
-                <span>Schema</span>
-                <span className="font-medium text-[var(--text)]">v{layout.schema_version}</span>
+                <span>Uploaded</span>
+                <span className="font-medium text-[var(--text)]">{uploadDate}</span>
               </div>
             </div>
           </div>
