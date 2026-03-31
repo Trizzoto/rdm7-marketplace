@@ -22,6 +22,11 @@ export type Layout = {
   rating_count: number;
   price: number;
   item_type: "layout" | "dbc";
+  vehicle_tags: string[];
+  can_speed: string | null;
+  compatibility_notes: string | null;
+  dbc_signal_count: number;
+  dbc_can_ids: string | null;
   is_published: boolean;
   schema_version: number;
   created_at: string;
