@@ -38,6 +38,7 @@ interface ParsedWidget {
   y: number;
   w: number;
   h: number;
+  config?: { label?: string; [key: string]: unknown };
 }
 
 interface ParsedDbc {
@@ -202,6 +203,7 @@ export function UploadForm({
               y: w.y ?? 0,
               w: w.width ?? w.w ?? 80,
               h: w.height ?? w.h ?? 40,
+              config: w.config || {},
             })
           );
           const result: ParsedRdm = {
@@ -337,49 +339,57 @@ export function UploadForm({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    canvas.width = 800;
-    canvas.height = 480;
+    const CW = 800, CH = 480;
+    canvas.width = CW;
+    canvas.height = CH;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     // Background
     ctx.fillStyle = "#0a0a0c";
-    ctx.fillRect(0, 0, 800, 480);
+    ctx.fillRect(0, 0, CW, CH);
+
+    // RDM uses center-origin: (0,0) = center of 800x480 screen
+    // Convert to canvas top-left origin
+    const ox = CW / 2;  // 400
+    const oy = CH / 2;  // 240
 
     // Draw each widget
     for (const w of parsedRdm.widgets) {
       const color = WIDGET_COLORS[w.type] || "#444444";
       const hasBorder = w.type === "panel";
+      // Convert center-origin to top-left origin
+      const cx = ox + w.x - w.w / 2;
+      const cy = oy + w.y - w.h / 2;
 
       if (w.type === "meter") {
-        // Circle
         ctx.fillStyle = color;
         ctx.beginPath();
-        ctx.arc(w.x + w.w / 2, w.y + w.h / 2, Math.min(w.w, w.h) / 2, 0, Math.PI * 2);
+        ctx.arc(ox + w.x, oy + w.y, Math.min(w.w, w.h) / 2, 0, Math.PI * 2);
         ctx.fill();
       } else if (w.type === "arc") {
-        // Arc
         ctx.strokeStyle = color;
         ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.arc(w.x + w.w / 2, w.y + w.h / 2, Math.min(w.w, w.h) / 2, Math.PI, 0);
+        ctx.arc(ox + w.x, oy + w.y, Math.min(w.w, w.h) / 2, Math.PI, 0);
         ctx.stroke();
       } else {
         ctx.fillStyle = color;
-        ctx.fillRect(w.x, w.y, w.w, w.h);
+        ctx.fillRect(cx, cy, w.w, w.h);
         if (hasBorder) {
-          ctx.strokeStyle = "#333";
+          ctx.strokeStyle = "#2e8b57";
           ctx.lineWidth = 1;
-          ctx.strokeRect(w.x, w.y, w.w, w.h);
+          ctx.strokeRect(cx, cy, w.w, w.h);
         }
       }
 
       // Label
-      ctx.fillStyle = "#FFFFFF";
-      ctx.font = "10px sans-serif";
+      ctx.fillStyle = "rgba(255,255,255,0.7)";
+      ctx.font = "bold 9px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(w.type, w.x + w.w / 2, w.y + w.h / 2);
+      const label = w.config?.label || w.type;
+      ctx.fillText(label, w.type === "meter" || w.type === "arc" ? ox + w.x : cx + w.w / 2, w.type === "meter" || w.type === "arc" ? oy + w.y : cy + w.h / 2);
     }
 
     // Convert to blob and data URL
@@ -761,6 +771,7 @@ export function UploadForm({
                       src={previewScreenshotUrl}
                       alt="Layout preview"
                       className="w-full h-auto"
+                      style={{ maxWidth: '800px', maxHeight: '480px', objectFit: 'contain' }}
                     />
                     {!customScreenshot && autoPreviewUrl && (
                       <div className="bg-[var(--bg)] px-3 py-1.5 text-[11px] text-[var(--text-muted)]">
