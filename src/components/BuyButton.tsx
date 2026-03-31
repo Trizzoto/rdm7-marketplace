@@ -22,7 +22,6 @@ export function BuyButton({ layoutId, rdmUrl, name, price, itemType }: BuyButton
   const isFree = price === 0;
 
   useEffect(() => {
-    // Check URL params for ?purchased=true (redirect from Stripe)
     const params = new URLSearchParams(window.location.search);
     if (params.get("purchased") === "true") {
       setPurchased(true);
@@ -36,7 +35,6 @@ export function BuyButton({ layoutId, rdmUrl, name, price, itemType }: BuyButton
         setUserEmail(data.user.email ?? null);
 
         if (!isFree) {
-          // Check if user already purchased this layout
           const { data: purchase } = await supabase
             .from("purchases")
             .select("id")
@@ -44,9 +42,7 @@ export function BuyButton({ layoutId, rdmUrl, name, price, itemType }: BuyButton
             .eq("layout_id", layoutId)
             .maybeSingle();
 
-          if (purchase) {
-            setPurchased(true);
-          }
+          if (purchase) setPurchased(true);
         }
       }
       setCheckingPurchase(false);
@@ -57,17 +53,23 @@ export function BuyButton({ layoutId, rdmUrl, name, price, itemType }: BuyButton
     if (!rdmUrl) return;
     setLoading(true);
     try {
-      try {
-        await supabase.rpc("increment_downloads", { layout_id: layoutId });
-      } catch {
-        /* ok */
-      }
+      // Increment download counter
+      try { await supabase.rpc("increment_downloads", { layout_id: layoutId }); } catch { /* ok */ }
+
+      // Fetch the file as a blob to force download (cross-origin URLs don't trigger download with <a>)
+      const response = await fetch(rdmUrl);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = rdmUrl;
+      link.href = url;
       link.download = `${name}${ext}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch {
+      // Fallback: open in new tab
+      window.open(rdmUrl, "_blank");
     } finally {
       setLoading(false);
     }
@@ -75,7 +77,6 @@ export function BuyButton({ layoutId, rdmUrl, name, price, itemType }: BuyButton
 
   const handleBuy = async () => {
     if (!userEmail) {
-      // Redirect to login
       window.location.href = `/auth/login?redirect=/layout-detail/${layoutId}`;
       return;
     }
@@ -101,32 +102,29 @@ export function BuyButton({ layoutId, rdmUrl, name, price, itemType }: BuyButton
     }
   };
 
-  // Free item: show download button
+  // Free item
   if (isFree) {
     return (
       <button
         onClick={handleDownload}
         disabled={!rdmUrl || loading}
-        className="w-full bg-[var(--accent)] text-white font-bold py-2.5 rounded-lg hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed uppercase text-sm tracking-wide"
+        className="w-full bg-[var(--accent)] text-white font-heading font-bold py-3 rounded-lg hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed uppercase text-sm tracking-wide"
       >
-        {loading ? "Downloading..." : `Download ${ext}`}
+        {loading ? "Downloading..." : "Download"}
       </button>
     );
   }
 
-  // Still checking purchase status
+  // Checking purchase
   if (checkingPurchase) {
     return (
-      <button
-        disabled
-        className="w-full bg-[var(--surface)] border border-[var(--border)] text-[var(--text-muted)] font-bold py-2.5 rounded-lg uppercase text-sm tracking-wide"
-      >
+      <button disabled className="w-full bg-[var(--surface)] border border-[var(--border)] text-[var(--text-muted)] font-bold py-3 rounded-lg uppercase text-sm tracking-wide">
         Loading...
       </button>
     );
   }
 
-  // Already purchased: show download button
+  // Already purchased
   if (purchased) {
     return (
       <div className="space-y-2">
@@ -139,20 +137,20 @@ export function BuyButton({ layoutId, rdmUrl, name, price, itemType }: BuyButton
         <button
           onClick={handleDownload}
           disabled={!rdmUrl || loading}
-          className="w-full bg-[var(--accent)] text-white font-bold py-2.5 rounded-lg hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed uppercase text-sm tracking-wide"
+          className="w-full bg-[var(--accent)] text-white font-heading font-bold py-3 rounded-lg hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed uppercase text-sm tracking-wide"
         >
-          {loading ? "Downloading..." : `Download ${ext}`}
+          {loading ? "Downloading..." : "Download"}
         </button>
       </div>
     );
   }
 
-  // Not purchased: show buy button with lock icon
+  // Not purchased — buy button
   return (
     <button
       onClick={handleBuy}
       disabled={loading}
-      className="w-full bg-[var(--accent)] text-white font-bold py-2.5 rounded-lg hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed uppercase text-sm tracking-wide flex items-center justify-center gap-2"
+      className="w-full bg-[var(--accent)] text-white font-heading font-bold py-3 rounded-lg hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed uppercase text-sm tracking-wide flex items-center justify-center gap-2"
     >
       {loading ? (
         <span className="flex items-center gap-2">
@@ -162,14 +160,9 @@ export function BuyButton({ layoutId, rdmUrl, name, price, itemType }: BuyButton
       ) : (
         <>
           <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
-          Buy for ${price.toFixed(2)}
+          Buy ${price.toFixed(2)}
         </>
       )}
     </button>
