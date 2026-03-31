@@ -1,24 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { showToast } from "@/components/Toast";
 
 const ECU_TYPES = ["MaxxECU", "Haltech", "Link", "AEM", "MoTeC", "Ecumaster", "Custom"];
 const CAN_SPEEDS = ["500 kbps", "1 Mbps", "Other"];
-
-const WIDGET_COLORS: Record<string, string> = {
-  rpm_bar: "#00FF00",
-  panel: "#1a2a2a",
-  bar: "#3b82f6",
-  indicator: "#FFD700",
-  warning: "#FF4444",
-  text: "#FFFFFF",
-  image: "#8B5CF6",
-  shape_panel: "#2a2a2a",
-  meter: "#333333",
-  arc: "#FF6600",
-};
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -29,16 +16,6 @@ interface ParsedRdm {
   widgetCount: number;
   signalCount: number;
   ecu: string;
-  widgets: ParsedWidget[];
-}
-
-interface ParsedWidget {
-  type: string;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  config?: { label?: string; [key: string]: unknown };
 }
 
 interface ParsedDbc {
@@ -167,10 +144,7 @@ export function UploadForm({
   const [canSpeed, setCanSpeed] = useState("");
   const [compatibilityNotes, setCompatibilityNotes] = useState("");
   const [customScreenshot, setCustomScreenshot] = useState<File | null>(null);
-  const [autoPreviewUrl, setAutoPreviewUrl] = useState<string | null>(null);
-  const [autoPreviewBlob, setAutoPreviewBlob] = useState<Blob | null>(null);
   const customScreenshotRef = useRef<HTMLInputElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Step 3 state
   const [uploading, setUploading] = useState(false);
@@ -195,23 +169,11 @@ export function UploadForm({
         if (type === 0) {
           const json = new TextDecoder().decode(new Uint8Array(buf, offset, dataLen));
           const parsed = JSON.parse(json);
-          const widgets: ParsedWidget[] = (parsed.widgets || []).map(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (w: any) => ({
-              type: w.type || "panel",
-              x: w.x ?? 0,
-              y: w.y ?? 0,
-              w: w.width ?? w.w ?? 80,
-              h: w.height ?? w.h ?? 40,
-              config: w.config || {},
-            })
-          );
           const result: ParsedRdm = {
             name: parsed.name || f.name.replace(/\.rdm$/i, ""),
             widgetCount: parsed.widgets?.length || 0,
             signalCount: parsed.signals?.length || 0,
             ecu: parsed.ecu || "",
-            widgets,
           };
           setParsedRdm(result);
           setName(result.name);
@@ -226,7 +188,6 @@ export function UploadForm({
         widgetCount: 0,
         signalCount: 0,
         ecu: "",
-        widgets: [],
       });
       setName(f.name.replace(/\.rdm$/i, ""));
     } catch {
@@ -235,7 +196,6 @@ export function UploadForm({
         widgetCount: 0,
         signalCount: 0,
         ecu: "",
-        widgets: [],
       });
       setName(f.name.replace(/\.rdm$/i, ""));
     }
@@ -321,93 +281,16 @@ export function UploadForm({
     setParsedDbc(null);
     setName("");
     setEcuType("");
-    setAutoPreviewUrl(null);
-    setAutoPreviewBlob(null);
+    setCustomScreenshot(null);
   }, []);
 
   /* ---------------------------------------------------------------- */
-  /*  Auto-preview canvas                                              */
-  /* ---------------------------------------------------------------- */
-
-  useEffect(() => {
-    if (!parsedRdm || parsedRdm.widgets.length === 0) {
-      setAutoPreviewUrl(null);
-      setAutoPreviewBlob(null);
-      return;
-    }
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const CW = 800, CH = 480;
-    canvas.width = CW;
-    canvas.height = CH;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    // Background
-    ctx.fillStyle = "#0a0a0c";
-    ctx.fillRect(0, 0, CW, CH);
-
-    // RDM uses center-origin: (0,0) = center of 800x480 screen
-    // Convert to canvas top-left origin
-    const ox = CW / 2;  // 400
-    const oy = CH / 2;  // 240
-
-    // Draw each widget
-    for (const w of parsedRdm.widgets) {
-      const color = WIDGET_COLORS[w.type] || "#444444";
-      const hasBorder = w.type === "panel";
-      // Convert center-origin to top-left origin
-      const cx = ox + w.x - w.w / 2;
-      const cy = oy + w.y - w.h / 2;
-
-      if (w.type === "meter") {
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.arc(ox + w.x, oy + w.y, Math.min(w.w, w.h) / 2, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (w.type === "arc") {
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.arc(ox + w.x, oy + w.y, Math.min(w.w, w.h) / 2, Math.PI, 0);
-        ctx.stroke();
-      } else {
-        ctx.fillStyle = color;
-        ctx.fillRect(cx, cy, w.w, w.h);
-        if (hasBorder) {
-          ctx.strokeStyle = "#2e8b57";
-          ctx.lineWidth = 1;
-          ctx.strokeRect(cx, cy, w.w, w.h);
-        }
-      }
-
-      // Label
-      ctx.fillStyle = "rgba(255,255,255,0.7)";
-      ctx.font = "bold 9px sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      const label = w.config?.label || w.type;
-      ctx.fillText(label, w.type === "meter" || w.type === "arc" ? ox + w.x : cx + w.w / 2, w.type === "meter" || w.type === "arc" ? oy + w.y : cy + w.h / 2);
-    }
-
-    // Convert to blob and data URL
-    const dataUrl = canvas.toDataURL("image/png");
-    setAutoPreviewUrl(dataUrl);
-
-    canvas.toBlob((blob) => {
-      if (blob) setAutoPreviewBlob(blob);
-    }, "image/png");
-  }, [parsedRdm]);
-
-  /* ---------------------------------------------------------------- */
-  /*  Preview screenshot URL (custom overrides auto)                   */
+  /*  Preview screenshot URL                                           */
   /* ---------------------------------------------------------------- */
 
   const previewScreenshotUrl = customScreenshot
     ? URL.createObjectURL(customScreenshot)
-    : autoPreviewUrl;
+    : null;
 
   /* ---------------------------------------------------------------- */
   /*  Price validation                                                 */
@@ -430,14 +313,12 @@ export function UploadForm({
 
       // 1. Upload screenshot
       let screenshotUrl = "";
-      const screenshotSource = customScreenshot || autoPreviewBlob;
-      if (screenshotSource) {
-        const ext = customScreenshot ? (customScreenshot.name.split(".").pop() || "png") : "png";
+      if (customScreenshot) {
+        const ext = customScreenshot.name.split(".").pop() || "png";
         const path = `${userId}/${timestamp}.${ext}`;
-        const contentType = customScreenshot ? customScreenshot.type : "image/png";
         const { error: upErr } = await supabase.storage
           .from("screenshots")
-          .upload(path, screenshotSource, { contentType, upsert: true });
+          .upload(path, customScreenshot, { contentType: customScreenshot.type, upsert: true });
         if (upErr) throw new Error(upErr.message || "Screenshot upload failed");
         const { data: urlData } = supabase.storage.from("screenshots").getPublicUrl(path);
         screenshotUrl = urlData.publicUrl;
@@ -500,9 +381,6 @@ export function UploadForm({
 
   return (
     <div className="bg-[var(--surface)] border border-[var(--border)] rounded-card p-6 mb-6">
-      {/* Hidden canvas for auto-preview generation */}
-      <canvas ref={canvasRef} className="hidden" />
-
       <h2 className="font-heading text-xl font-bold uppercase text-[var(--text)] mb-1">
         Upload New Listing
       </h2>
@@ -762,7 +640,9 @@ export function UploadForm({
 
               {/* Screenshot section */}
               <div className="mb-4">
-                <label className="block text-xs text-[var(--text-muted)] mb-2">Screenshot</label>
+                <label className="block text-xs text-[var(--text-muted)] mb-2">
+                  Screenshot <span className="text-red-400">*</span>
+                </label>
 
                 {previewScreenshotUrl && (
                   <div className="mb-3 rounded-card overflow-hidden border border-[var(--border)]">
@@ -773,11 +653,6 @@ export function UploadForm({
                       className="w-full h-auto"
                       style={{ maxWidth: '800px', maxHeight: '480px', objectFit: 'contain' }}
                     />
-                    {!customScreenshot && autoPreviewUrl && (
-                      <div className="bg-[var(--bg)] px-3 py-1.5 text-[11px] text-[var(--text-muted)]">
-                        Auto-generated from layout data
-                      </div>
-                    )}
                   </div>
                 )}
 
@@ -793,7 +668,7 @@ export function UploadForm({
                   onClick={() => customScreenshotRef.current?.click()}
                   className="text-xs font-bold text-[var(--accent)] hover:underline"
                 >
-                  {customScreenshot ? "Change custom screenshot" : "Upload custom screenshot"}
+                  {customScreenshot ? "Change screenshot" : "Upload screenshot"}
                 </button>
                 {customScreenshot && (
                   <button
@@ -801,8 +676,13 @@ export function UploadForm({
                     onClick={() => setCustomScreenshot(null)}
                     className="text-xs text-[var(--text-muted)] hover:underline ml-3"
                   >
-                    Remove (use auto)
+                    Remove
                   </button>
+                )}
+                {!customScreenshot && (
+                  <p className="text-[11px] text-red-400 mt-1">
+                    A screenshot is required for layout listings
+                  </p>
                 )}
               </div>
             </div>
@@ -938,7 +818,7 @@ export function UploadForm({
             </button>
             <button
               type="button"
-              disabled={!name || !priceValid}
+              disabled={!name || !priceValid || (itemType === "layout" && !customScreenshot)}
               onClick={() => setStep(3)}
               className="bg-[var(--accent)] text-white font-bold px-6 py-2.5 rounded-card text-sm uppercase tracking-wide hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
@@ -1030,7 +910,7 @@ export function UploadForm({
                   )}
                   <SummaryRow
                     label="Screenshot"
-                    value={customScreenshot ? "Custom upload" : autoPreviewUrl ? "Auto-generated" : "None"}
+                    value={customScreenshot ? customScreenshot.name : "None"}
                   />
                 </>
               )}
