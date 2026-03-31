@@ -16,12 +16,27 @@ export function Navbar() {
   const notificationCount = 3;
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+      if (data.user) ensureProfileExists(data.user);
+    });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) ensureProfileExists(session.user);
     });
     return () => listener.subscription.unsubscribe();
   }, []);
+
+  async function ensureProfileExists(u: User) {
+    const { data } = await supabase.from("profiles").select("id").eq("id", u.id).single();
+    if (!data) {
+      await supabase.from("profiles").upsert({
+        id: u.id,
+        display_name: u.user_metadata?.full_name || u.email?.split("@")[0] || "User",
+        avatar_url: u.user_metadata?.avatar_url || null,
+      });
+    }
+  }
 
   // Close "More" dropdown on outside click
   useEffect(() => {

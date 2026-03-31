@@ -37,8 +37,8 @@ export function UploadForm({ userId, onSuccess }: { userId: string; onSuccess: (
         const path = `${userId}/${timestamp}.${ext}`;
         const { error: upErr } = await supabase.storage
           .from("screenshots")
-          .upload(path, screenshot, { contentType: screenshot.type });
-        if (upErr) throw upErr;
+          .upload(path, screenshot, { contentType: screenshot.type, upsert: true });
+        if (upErr) throw new Error(upErr.message || "Screenshot upload failed");
         const { data: urlData } = supabase.storage.from("screenshots").getPublicUrl(path);
         screenshotUrl = urlData.publicUrl;
       }
@@ -47,8 +47,8 @@ export function UploadForm({ userId, onSuccess }: { userId: string; onSuccess: (
       const rdmPath = `${userId}/${timestamp}_${rdmFile.name}`;
       const { error: rdmErr } = await supabase.storage
         .from("layouts")
-        .upload(rdmPath, rdmFile, { contentType: "application/octet-stream" });
-      if (rdmErr) throw rdmErr;
+        .upload(rdmPath, rdmFile, { contentType: "application/octet-stream", upsert: true });
+      if (rdmErr) throw new Error(rdmErr.message || "File upload failed");
       const { data: rdmUrlData } = supabase.storage.from("layouts").getPublicUrl(rdmPath);
 
       // Parse .rdm to get widget/signal counts
@@ -91,11 +91,11 @@ export function UploadForm({ userId, onSuccess }: { userId: string; onSuccess: (
         signal_count: signalCount,
         is_published: true,
       });
-      if (dbErr) throw dbErr;
+      if (dbErr) throw new Error(dbErr.message || "Database insert failed");
 
       onSuccess();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
+      const msg = err instanceof Error ? err.message : (err && typeof err === 'object' && 'message' in err) ? (err as {message: string}).message : JSON.stringify(err);
       setError("Upload failed: " + msg);
     } finally {
       setUploading(false);
