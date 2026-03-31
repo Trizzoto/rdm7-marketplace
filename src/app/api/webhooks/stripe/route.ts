@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
         .single();
 
       const buyerId = buyerProfile?.id ?? null;
+      // 15% platform fee (for tracking — all payment goes to platform account)
       const platformFee = Math.round(amountTotal * 0.15);
 
       // Insert purchase record

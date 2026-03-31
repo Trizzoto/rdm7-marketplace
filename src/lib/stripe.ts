@@ -31,7 +31,7 @@ async function stripeRequest<T = Record<string, unknown>>(
 }
 
 // ---------------------------------------------------------------------------
-// Checkout Session (Destination Charges with 15% platform fee)
+// Checkout Session (direct payment to platform — no Connect, no split)
 // ---------------------------------------------------------------------------
 
 type CheckoutSession = {
@@ -42,11 +42,9 @@ type CheckoutSession = {
 export async function createCheckoutSession(
   layoutId: string,
   priceInCents: number,
-  sellerId: string,
-  buyerEmail: string,
-  layoutName?: string
+  layoutName: string,
+  buyerEmail: string
 ): Promise<CheckoutSession> {
-  const applicationFee = Math.round(priceInCents * 0.15); // 15% platform cut
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   const params: Record<string, string> = {
@@ -55,8 +53,6 @@ export async function createCheckoutSession(
     "line_items[0][price_data][unit_amount]": priceInCents.toString(),
     "line_items[0][price_data][product_data][name]": layoutName || `RDM-7 Layout: ${layoutId}`,
     "line_items[0][quantity]": "1",
-    "payment_intent_data[application_fee_amount]": applicationFee.toString(),
-    "payment_intent_data[transfer_data][destination]": sellerId,
     customer_email: buyerEmail,
     success_url: `${baseUrl}/layout-detail/${layoutId}?purchased=true`,
     cancel_url: `${baseUrl}/layout-detail/${layoutId}`,
@@ -66,62 +62,6 @@ export async function createCheckoutSession(
 
   const session = await stripeRequest<CheckoutSession>("/checkout/sessions", params);
   return session;
-}
-
-// ---------------------------------------------------------------------------
-// Connect Account Management
-// ---------------------------------------------------------------------------
-
-type ConnectAccount = {
-  id: string;
-  charges_enabled: boolean;
-  payouts_enabled: boolean;
-  details_submitted: boolean;
-};
-
-export async function createConnectAccount(email: string): Promise<ConnectAccount> {
-  const account = await stripeRequest<ConnectAccount>("/accounts", {
-    type: "express",
-    country: "US",
-    email,
-    "capabilities[card_payments][requested]": "true",
-    "capabilities[transfers][requested]": "true",
-  });
-  return account;
-}
-
-export async function createConnectAccountLink(
-  accountId: string,
-  userId: string
-): Promise<string> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-
-  const link = await stripeRequest<{ url: string }>("/account_links", {
-    account: accountId,
-    refresh_url: `${baseUrl}/creator/onboarding?refresh=true`,
-    return_url: `${baseUrl}/creator/onboarding?success=true`,
-    type: "account_onboarding",
-  });
-
-  return link.url;
-}
-
-export async function getAccountStatus(stripeAccountId: string): Promise<{
-  chargesEnabled: boolean;
-  payoutsEnabled: boolean;
-  detailsSubmitted: boolean;
-}> {
-  const account = await stripeRequest<ConnectAccount>(
-    `/accounts/${stripeAccountId}`,
-    undefined,
-    "GET"
-  );
-
-  return {
-    chargesEnabled: account.charges_enabled,
-    payoutsEnabled: account.payouts_enabled,
-    detailsSubmitted: account.details_submitted,
-  };
 }
 
 // ---------------------------------------------------------------------------

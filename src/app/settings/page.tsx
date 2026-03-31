@@ -13,6 +13,9 @@ export default function SettingsPage() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [payoutEmail, setPayoutEmail] = useState("");
+  const [payoutBsb, setPayoutBsb] = useState("");
+  const [payoutAccount, setPayoutAccount] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
@@ -38,6 +41,9 @@ export default function SettingsPage() {
       setDisplayName(p.display_name || "");
       setBio(p.bio || "");
       setAvatarUrl(p.avatar_url);
+      setPayoutEmail((p as Record<string, unknown>).payout_email as string || "");
+      setPayoutBsb((p as Record<string, unknown>).payout_bsb as string || "");
+      setPayoutAccount((p as Record<string, unknown>).payout_account as string || "");
     }
     setLoading(false);
   };
@@ -77,6 +83,9 @@ export default function SettingsPage() {
           display_name: displayName.trim() || "Anonymous",
           bio: bio.trim() || null,
           avatar_url: newAvatarUrl,
+          payout_email: payoutEmail.trim() || null,
+          payout_bsb: payoutBsb.trim() || null,
+          payout_account: payoutAccount.trim() || null,
         })
         .eq("id", user.id);
 
@@ -190,6 +199,62 @@ export default function SettingsPage() {
             placeholder="Tell others about yourself..."
           />
           <p className="text-xs text-[var(--text-muted)] mt-1 text-right">{bio.length}/300</p>
+        </div>
+      </section>
+
+      {/* Payout Details Section */}
+      <section className="bg-[var(--surface)] border border-[var(--border)] rounded-card p-6 mb-6">
+        <h2 className="font-heading text-lg font-bold uppercase mb-5">Payout Details</h2>
+        <p className="text-sm text-[var(--text-muted)] mb-5">
+          Payouts are processed every 3 days. Minimum payout: $5.00
+        </p>
+
+        {/* PayPal Email */}
+        <div className="mb-4">
+          <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase tracking-wide">
+            PayPal Email
+          </label>
+          <input
+            type="email"
+            value={payoutEmail}
+            onChange={(e) => setPayoutEmail(e.target.value)}
+            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-4 py-2.5 text-sm text-[var(--text)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-colors"
+            placeholder="your@paypal.com"
+          />
+        </div>
+
+        <p className="text-xs font-medium text-[var(--text-muted)] mb-3 uppercase tracking-wide">
+          Or Bank Transfer
+        </p>
+
+        {/* BSB */}
+        <div className="mb-4">
+          <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase tracking-wide">
+            BSB
+          </label>
+          <input
+            type="text"
+            value={payoutBsb}
+            onChange={(e) => setPayoutBsb(e.target.value)}
+            maxLength={7}
+            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-4 py-2.5 text-sm text-[var(--text)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-colors"
+            placeholder="000-000"
+          />
+        </div>
+
+        {/* Account Number */}
+        <div>
+          <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase tracking-wide">
+            Account Number
+          </label>
+          <input
+            type="text"
+            value={payoutAccount}
+            onChange={(e) => setPayoutAccount(e.target.value)}
+            maxLength={20}
+            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-4 py-2.5 text-sm text-[var(--text)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-colors"
+            placeholder="12345678"
+          />
         </div>
       </section>
 

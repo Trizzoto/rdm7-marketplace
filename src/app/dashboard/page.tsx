@@ -30,7 +30,7 @@ function DashboardContent() {
   // Earnings state
   const [totalEarnings, setTotalEarnings] = useState(0);
   const [totalSales, setTotalSales] = useState(0);
-  const [stripeAccountId, setStripeAccountId] = useState<string | null>(null);
+  const [totalPlatformFee, setTotalPlatformFee] = useState(0);
 
   // Price editing state
   const [editingPrice, setEditingPrice] = useState<string | null>(null);
@@ -42,22 +42,9 @@ function DashboardContent() {
         setUserId(data.user.id);
         fetchMyLayouts(data.user.id);
         fetchEarnings(data.user.id);
-        fetchProfile(data.user.id);
       }
     });
   }, []);
-
-  const fetchProfile = async (uid: string) => {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("stripe_account_id")
-      .eq("id", uid)
-      .single();
-
-    if (profile?.stripe_account_id) {
-      setStripeAccountId(profile.stripe_account_id);
-    }
-  };
 
   const fetchEarnings = async (uid: string) => {
     // Get all layouts by this user
@@ -86,7 +73,9 @@ function DashboardContent() {
         (sum, p) => sum + (p.amount_cents - p.platform_fee_cents),
         0
       );
+      const fees = rows.reduce((sum, p) => sum + p.platform_fee_cents, 0);
       setTotalEarnings(earnings / 100);
+      setTotalPlatformFee(fees / 100);
       setTotalSales(rows.length);
     }
   };
@@ -198,21 +187,9 @@ function DashboardContent() {
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-card p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-heading text-xl font-bold uppercase">Earnings</h2>
-          {stripeAccountId ? (
-            <span className="flex items-center gap-1.5 text-xs font-medium text-green-600">
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              Stripe Connected
-            </span>
-          ) : (
-            <Link
-              href="/creator/onboarding"
-              className="text-xs font-heading font-bold uppercase tracking-wider text-[var(--accent)] hover:underline"
-            >
-              Connect Stripe to Sell
-            </Link>
-          )}
+          <span className="text-xs font-medium text-[var(--text-muted)]">
+            Next payout: every 3 days
+          </span>
         </div>
 
         {totalSales > 0 ? (
@@ -228,25 +205,16 @@ function DashboardContent() {
             <div>
               <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide mb-1">Platform Fee (15%)</p>
               <p className="text-2xl font-heading font-bold text-[var(--text-muted)]">
-                ${(totalEarnings / 5.667).toFixed(2)}
+                ${totalPlatformFee.toFixed(2)}
               </p>
             </div>
           </div>
         ) : (
           <div className="text-center py-6">
             <p className="text-sm text-[var(--text-muted)] mb-2">No sales yet.</p>
-            {!stripeAccountId ? (
-              <p className="text-sm text-[var(--text-muted)]">
-                <Link href="/creator/onboarding" className="text-[var(--accent)] hover:underline font-medium">
-                  Connect your Stripe account
-                </Link>{" "}
-                to start selling layouts and DBC files.
-              </p>
-            ) : (
-              <p className="text-sm text-[var(--text-muted)]">
-                Set a price on your uploads to start earning.
-              </p>
-            )}
+            <p className="text-sm text-[var(--text-muted)]">
+              Set a price on your uploads to start earning. Payouts are processed every 3 days.
+            </p>
           </div>
         )}
       </div>

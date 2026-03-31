@@ -18,10 +18,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Fetch layout with seller profile
+    // Fetch layout
     const { data: layout, error: layoutErr } = await supabaseAdmin
       .from("layouts")
-      .select("*, profiles(stripe_account_id)")
+      .select("id, name, price, author_id")
       .eq("id", layoutId)
       .eq("is_published", true)
       .single();
@@ -34,22 +34,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "This layout is free" }, { status: 400 });
     }
 
-    const sellerStripeId = layout.profiles?.stripe_account_id;
-    if (!sellerStripeId) {
-      return NextResponse.json(
-        { error: "Seller has not connected their Stripe account" },
-        { status: 400 }
-      );
-    }
-
     const priceInCents = Math.round(layout.price * 100);
 
     const session = await createCheckoutSession(
       layoutId,
       priceInCents,
-      sellerStripeId,
-      buyerEmail,
-      layout.name
+      layout.name,
+      buyerEmail
     );
 
     return NextResponse.json({ url: session.url });
