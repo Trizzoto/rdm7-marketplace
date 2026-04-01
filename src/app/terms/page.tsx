@@ -68,7 +68,7 @@ export default function TermsPage() {
             </li>
             <li>Payments are processed through Stripe. By selling on the platform, you agree to Stripe&apos;s terms of service.</li>
             <li>Creators must connect a valid Stripe account to receive payouts.</li>
-            <li>Prices are listed in USD. Currency conversions are handled by the payment processor.</li>
+            <li>Prices are listed in AUD. Currency conversions are handled by the payment processor.</li>
             <li>All sales are final. Refund requests are handled on a case-by-case basis.</li>
           </ul>
           <p>

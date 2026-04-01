@@ -151,7 +151,7 @@ export function EditForm({
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
           <label className="block text-xs font-medium text-[var(--text-muted)] mb-1 uppercase tracking-wide">
-            Price (USD)
+            Price (AUD)
           </label>
           <input
             type="number"

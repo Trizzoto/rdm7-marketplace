@@ -50,7 +50,7 @@ export async function createCheckoutSession(
 
   const params: Record<string, string> = {
     mode: "payment",
-    "line_items[0][price_data][currency]": "usd",
+    "line_items[0][price_data][currency]": "aud",
     "line_items[0][price_data][unit_amount]": priceInCents.toString(),
     "line_items[0][price_data][product_data][name]": layoutName || `RDM-7 Layout: ${layoutId}`,
     "line_items[0][quantity]": "1",
