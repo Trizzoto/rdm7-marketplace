@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Layout } from "@/lib/supabase";
 import { UploadForm } from "@/components/UploadForm";
+import { EditForm } from "@/components/EditForm";
 import { AuthGuard } from "@/components/AuthGuard";
 import Link from "next/link";
 
@@ -35,6 +36,9 @@ function DashboardContent() {
   // Price editing state
   const [editingPrice, setEditingPrice] = useState<string | null>(null);
   const [priceInput, setPriceInput] = useState("");
+
+  // Full edit state
+  const [editingLayout, setEditingLayout] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -268,8 +272,18 @@ function DashboardContent() {
       ) : (
         <div className="space-y-3">
           {filteredLayouts.map((l) => (
+            <div key={l.id}>
+            {editingLayout === l.id ? (
+              <EditForm
+                layout={l}
+                onSuccess={() => {
+                  setEditingLayout(null);
+                  if (userId) fetchMyLayouts(userId);
+                }}
+                onCancel={() => setEditingLayout(null)}
+              />
+            ) : (
             <div
-              key={l.id}
               className="bg-[var(--surface)] border border-[var(--border)] rounded-card p-4 flex items-center gap-4"
             >
               {/* Thumbnail */}
@@ -369,6 +383,12 @@ function DashboardContent() {
               {/* Actions */}
               <div className="flex gap-2 flex-shrink-0">
                 <button
+                  onClick={() => setEditingLayout(editingLayout === l.id ? null : l.id)}
+                  className="text-xs px-3 py-1.5 rounded-md border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+                >
+                  Edit
+                </button>
+                <button
                   onClick={() => togglePublish(l.id, l.is_published)}
                   className="text-xs px-3 py-1.5 rounded-md border border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
                 >
@@ -381,6 +401,8 @@ function DashboardContent() {
                   Delete
                 </button>
               </div>
+            </div>
+            )}
             </div>
           ))}
         </div>
