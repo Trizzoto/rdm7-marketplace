@@ -1,16 +1,85 @@
 "use client";
 
 import { AuthGuard } from "@/components/AuthGuard";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 
+type ConnectStatus = {
+  connected: boolean;
+  charges_enabled: boolean;
+  payouts_enabled: boolean;
+  details_submitted: boolean;
+};
+
 function OnboardingContent() {
+  const [userId, setUserId] = useState<string | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
+  const [status, setStatus] = useState<ConnectStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [connecting, setConnecting] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setUserId(data.user.id);
+        setEmail(data.user.email || null);
+        fetchStatus(data.user.id);
+      }
+    });
+  }, []);
+
+  const fetchStatus = async (uid: string) => {
+    try {
+      const res = await fetch(`/api/connect/status?userId=${uid}`);
+      const data = await res.json();
+      setStatus(data);
+    } catch {
+      setStatus(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConnect = async () => {
+    if (!userId || !email) return;
+    setConnecting(true);
+    try {
+      const res = await fetch("/api/connect/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, email }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || "Failed to start onboarding");
+      }
+    } catch {
+      alert("Something went wrong. Please try again.");
+    } finally {
+      setConnecting(false);
+    }
+  };
+
+  const isFullyConnected = status?.connected && status?.charges_enabled && status?.payouts_enabled;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-32">
+        <div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto py-12">
       <h1 className="font-heading text-4xl font-bold uppercase mb-3 text-center">
         Sell Your Designs
       </h1>
       <p className="text-center text-[var(--text-muted)] mb-10">
-        Set a price on your layouts and DBC files. When someone buys your design, we handle the payment.
+        Set a price on your layouts and DBC files. Stripe handles all payments — you get paid directly.
       </p>
 
       <div className="grid gap-6 mb-10">
@@ -36,10 +105,10 @@ function OnboardingContent() {
             </svg>
           </div>
           <div>
-            <h3 className="font-heading text-lg font-bold uppercase mb-1">Payouts Every 3 Days</h3>
+            <h3 className="font-heading text-lg font-bold uppercase mb-1">Automatic Payouts</h3>
             <p className="text-sm text-[var(--text-muted)]">
-              Payouts are processed every 3 days via bank transfer or PayPal.
-              No invoicing needed.
+              Stripe sends your earnings directly to your bank account on a rolling basis.
+              No manual processing, no invoicing needed.
             </p>
           </div>
         </div>
@@ -47,15 +116,14 @@ function OnboardingContent() {
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-card p-6 flex gap-4">
           <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
             <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="text-green-600">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
           </div>
           <div>
-            <h3 className="font-heading text-lg font-bold uppercase mb-1">Add Your Payment Details</h3>
+            <h3 className="font-heading text-lg font-bold uppercase mb-1">Secure & Private</h3>
             <p className="text-sm text-[var(--text-muted)]">
-              To receive payouts, add your payment details in Settings.
-              We support PayPal and direct bank transfer.
+              Your bank details are entered on Stripe&apos;s secure platform — we never see
+              or store your financial information.
             </p>
           </div>
         </div>
@@ -80,17 +148,57 @@ function OnboardingContent() {
         </div>
       </div>
 
-      {/* CTA */}
+      {/* Stripe Connect Status & CTA */}
       <div className="text-center">
-        <Link
-          href="/settings"
-          className="inline-block bg-[var(--accent)] text-white font-heading text-lg font-bold uppercase tracking-wider px-10 py-4 rounded-md hover:bg-[var(--accent-hover)] transition-colors"
-        >
-          Go to Settings
-        </Link>
-        <p className="text-xs text-[var(--text-muted)] mt-3">
-          Add your PayPal or bank details to start receiving payouts.
-        </p>
+        {isFullyConnected ? (
+          <>
+            <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 font-medium text-sm px-6 py-3 rounded-lg mb-4">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Stripe account connected — you&apos;re ready to sell!
+            </div>
+            <div>
+              <Link
+                href="/dashboard"
+                className="inline-block bg-[var(--accent)] text-white font-heading text-lg font-bold uppercase tracking-wider px-10 py-4 rounded-md hover:bg-[var(--accent-hover)] transition-colors"
+              >
+                Go to Dashboard
+              </Link>
+            </div>
+          </>
+        ) : status?.connected && !status?.charges_enabled ? (
+          <>
+            <div className="inline-flex items-center gap-2 bg-yellow-50 border border-yellow-200 text-yellow-700 font-medium text-sm px-6 py-3 rounded-lg mb-4">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Stripe setup incomplete — please finish onboarding
+            </div>
+            <div>
+              <button
+                onClick={handleConnect}
+                disabled={connecting}
+                className="inline-block bg-[#635BFF] text-white font-heading text-lg font-bold uppercase tracking-wider px-10 py-4 rounded-md hover:bg-[#5349E0] transition-colors disabled:opacity-50"
+              >
+                {connecting ? "Redirecting..." : "Continue Stripe Setup"}
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={handleConnect}
+              disabled={connecting}
+              className="inline-block bg-[#635BFF] text-white font-heading text-lg font-bold uppercase tracking-wider px-10 py-4 rounded-md hover:bg-[#5349E0] transition-colors disabled:opacity-50"
+            >
+              {connecting ? "Redirecting..." : "Connect with Stripe"}
+            </button>
+            <p className="text-xs text-[var(--text-muted)] mt-3">
+              You&apos;ll be redirected to Stripe to set up your account securely.
+            </p>
+          </>
+        )}
       </div>
     </div>
   );

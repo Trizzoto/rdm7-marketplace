@@ -31,7 +31,7 @@ async function stripeRequest<T = Record<string, unknown>>(
 }
 
 // ---------------------------------------------------------------------------
-// Checkout Session (direct payment to platform — no Connect, no split)
+// Checkout Session — uses destination charges when seller has Stripe Connect
 // ---------------------------------------------------------------------------
 
 type CheckoutSession = {
@@ -43,7 +43,8 @@ export async function createCheckoutSession(
   layoutId: string,
   priceInCents: number,
   layoutName: string,
-  buyerEmail: string
+  buyerEmail: string,
+  sellerStripeAccountId?: string | null
 ): Promise<CheckoutSession> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
@@ -60,8 +61,57 @@ export async function createCheckoutSession(
     "metadata[buyer_email]": buyerEmail,
   };
 
+  // When the seller has a connected Stripe account, use destination charges:
+  // Stripe sends 85% to the seller automatically, platform keeps 15%.
+  if (sellerStripeAccountId) {
+    const applicationFee = Math.round(priceInCents * 0.15);
+    params["payment_intent_data[application_fee_amount]"] = applicationFee.toString();
+    params["payment_intent_data[transfer_data][destination]"] = sellerStripeAccountId;
+  }
+
   const session = await stripeRequest<CheckoutSession>("/checkout/sessions", params);
   return session;
+}
+
+// ---------------------------------------------------------------------------
+// Stripe Connect — account creation & onboarding
+// ---------------------------------------------------------------------------
+
+type StripeAccount = {
+  id: string;
+  charges_enabled: boolean;
+  payouts_enabled: boolean;
+  details_submitted: boolean;
+};
+
+export async function createConnectedAccount(email: string): Promise<StripeAccount> {
+  return stripeRequest<StripeAccount>("/accounts", {
+    type: "express",
+    email,
+    "capabilities[card_payments][requested]": "true",
+    "capabilities[transfers][requested]": "true",
+  });
+}
+
+export async function createAccountLink(
+  accountId: string,
+  returnUrl: string,
+  refreshUrl: string
+): Promise<{ url: string }> {
+  return stripeRequest<{ url: string }>("/account_links", {
+    account: accountId,
+    return_url: returnUrl,
+    refresh_url: refreshUrl,
+    type: "account_onboarding",
+  });
+}
+
+export async function getConnectedAccount(accountId: string): Promise<StripeAccount> {
+  return stripeRequest<StripeAccount>(`/accounts/${accountId}`, undefined, "GET");
+}
+
+export async function createLoginLink(accountId: string): Promise<{ url: string }> {
+  return stripeRequest<{ url: string }>(`/accounts/${accountId}/login_links`);
 }
 
 // ---------------------------------------------------------------------------

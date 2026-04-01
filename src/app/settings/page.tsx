@@ -1,9 +1,16 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Profile } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
+
+type ConnectStatus = {
+  connected: boolean;
+  charges_enabled: boolean;
+  payouts_enabled: boolean;
+  details_submitted: boolean;
+};
 
 export default function SettingsPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -13,14 +20,23 @@ export default function SettingsPage() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-  const [payoutEmail, setPayoutEmail] = useState("");
-  const [payoutBsb, setPayoutBsb] = useState("");
-  const [payoutAccount, setPayoutAccount] = useState("");
   const [saving, setSaving] = useState(false);
+  const [connectStatus, setConnectStatus] = useState<ConnectStatus | null>(null);
+  const [connectLoading, setConnectLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const fetchConnectStatus = useCallback(async (uid: string) => {
+    try {
+      const res = await fetch(`/api/connect/status?userId=${uid}`);
+      const data = await res.json();
+      setConnectStatus(data);
+    } catch {
+      setConnectStatus(null);
+    }
+  }, []);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -30,8 +46,9 @@ export default function SettingsPage() {
       }
       setUser(data.user);
       fetchProfile(data.user.id);
+      fetchConnectStatus(data.user.id);
     });
-  }, []);
+  }, [fetchConnectStatus]);
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase.from("profiles").select("*").eq("id", userId).single();
@@ -41,9 +58,6 @@ export default function SettingsPage() {
       setDisplayName(p.display_name || "");
       setBio(p.bio || "");
       setAvatarUrl(p.avatar_url);
-      setPayoutEmail((p as Record<string, unknown>).payout_email as string || "");
-      setPayoutBsb((p as Record<string, unknown>).payout_bsb as string || "");
-      setPayoutAccount((p as Record<string, unknown>).payout_account as string || "");
     }
     setLoading(false);
   };
@@ -83,9 +97,6 @@ export default function SettingsPage() {
           display_name: displayName.trim() || "Anonymous",
           bio: bio.trim() || null,
           avatar_url: newAvatarUrl,
-          payout_email: payoutEmail.trim() || null,
-          payout_bsb: payoutBsb.trim() || null,
-          payout_account: payoutAccount.trim() || null,
         })
         .eq("id", user.id);
 
@@ -101,6 +112,28 @@ export default function SettingsPage() {
       setError("Failed to save: " + msg);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleConnectStripe = async () => {
+    if (!user) return;
+    setConnectLoading(true);
+    try {
+      const res = await fetch("/api/connect/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id, email: user.email }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setError(data.error || "Failed to start Stripe setup");
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setConnectLoading(false);
     }
   };
 
@@ -202,60 +235,60 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* Payout Details Section */}
+      {/* Stripe Connect Section */}
       <section className="bg-[var(--surface)] border border-[var(--border)] rounded-card p-6 mb-6">
-        <h2 className="font-heading text-lg font-bold uppercase mb-5">Payout Details</h2>
-        <p className="text-sm text-[var(--text-muted)] mb-5">
-          Payouts are processed every 3 days. Minimum payout: $5.00
-        </p>
+        <h2 className="font-heading text-lg font-bold uppercase mb-5">Seller Payouts</h2>
 
-        {/* PayPal Email */}
-        <div className="mb-4">
-          <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase tracking-wide">
-            PayPal Email
-          </label>
-          <input
-            type="email"
-            value={payoutEmail}
-            onChange={(e) => setPayoutEmail(e.target.value)}
-            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-4 py-2.5 text-sm text-[var(--text)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-colors"
-            placeholder="your@paypal.com"
-          />
-        </div>
-
-        <p className="text-xs font-medium text-[var(--text-muted)] mb-3 uppercase tracking-wide">
-          Or Bank Transfer
-        </p>
-
-        {/* BSB */}
-        <div className="mb-4">
-          <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase tracking-wide">
-            BSB
-          </label>
-          <input
-            type="text"
-            value={payoutBsb}
-            onChange={(e) => setPayoutBsb(e.target.value)}
-            maxLength={7}
-            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-4 py-2.5 text-sm text-[var(--text)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-colors"
-            placeholder="000-000"
-          />
-        </div>
-
-        {/* Account Number */}
-        <div>
-          <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5 uppercase tracking-wide">
-            Account Number
-          </label>
-          <input
-            type="text"
-            value={payoutAccount}
-            onChange={(e) => setPayoutAccount(e.target.value)}
-            maxLength={20}
-            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-4 py-2.5 text-sm text-[var(--text)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-colors"
-            placeholder="12345678"
-          />
-        </div>
+        {connectStatus?.connected && connectStatus?.charges_enabled && connectStatus?.payouts_enabled ? (
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+              <span className="text-sm font-medium text-green-700">Stripe account connected</span>
+            </div>
+            <p className="text-sm text-[var(--text-muted)] mb-4">
+              Your earnings are sent directly to your bank account by Stripe.
+              We never see or store your financial details.
+            </p>
+            <button
+              onClick={handleConnectStripe}
+              disabled={connectLoading}
+              className="text-sm font-medium text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors disabled:opacity-50"
+            >
+              {connectLoading ? "Redirecting..." : "Update Stripe details"}
+            </button>
+          </div>
+        ) : connectStatus?.connected && !connectStatus?.charges_enabled ? (
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+              <span className="text-sm font-medium text-yellow-700">Setup incomplete</span>
+            </div>
+            <p className="text-sm text-[var(--text-muted)] mb-4">
+              Your Stripe account needs more information before you can receive payouts.
+            </p>
+            <button
+              onClick={handleConnectStripe}
+              disabled={connectLoading}
+              className="bg-[#635BFF] text-white font-heading text-sm font-bold uppercase tracking-wider px-6 py-2.5 rounded-md hover:bg-[#5349E0] transition-colors disabled:opacity-50"
+            >
+              {connectLoading ? "Redirecting..." : "Continue Stripe Setup"}
+            </button>
+          </div>
+        ) : (
+          <div>
+            <p className="text-sm text-[var(--text-muted)] mb-4">
+              Connect your Stripe account to receive automatic payouts when someone buys your designs.
+              Your bank details are entered securely on Stripe — we never see them.
+            </p>
+            <button
+              onClick={handleConnectStripe}
+              disabled={connectLoading}
+              className="bg-[#635BFF] text-white font-heading text-sm font-bold uppercase tracking-wider px-6 py-2.5 rounded-md hover:bg-[#5349E0] transition-colors disabled:opacity-50"
+            >
+              {connectLoading ? "Redirecting..." : "Connect with Stripe"}
+            </button>
+          </div>
+        )}
       </section>
 
       {/* Account Section */}

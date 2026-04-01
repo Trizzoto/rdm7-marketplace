@@ -34,13 +34,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "This layout is free" }, { status: 400 });
     }
 
+    // Fetch seller's Stripe Connect account (if they have one)
+    const { data: sellerProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("stripe_account_id")
+      .eq("id", layout.author_id)
+      .single();
+
     const priceInCents = Math.round(layout.price * 100);
 
     const session = await createCheckoutSession(
       layoutId,
       priceInCents,
       layout.name,
-      buyerEmail
+      buyerEmail,
+      sellerProfile?.stripe_account_id
     );
 
     return NextResponse.json({ url: session.url });

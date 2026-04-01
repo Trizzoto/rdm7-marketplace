@@ -188,7 +188,7 @@ function DashboardContent() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-heading text-xl font-bold uppercase">Earnings</h2>
           <span className="text-xs font-medium text-[var(--text-muted)]">
-            Next payout: every 3 days
+            Payouts handled by Stripe
           </span>
         </div>
 
@@ -213,7 +213,8 @@ function DashboardContent() {
           <div className="text-center py-6">
             <p className="text-sm text-[var(--text-muted)] mb-2">No sales yet.</p>
             <p className="text-sm text-[var(--text-muted)]">
-              Set a price on your uploads to start earning. Payouts are processed every 3 days.
+              Set a price on your uploads to start earning. Connect your Stripe account in{" "}
+              <a href="/settings" className="text-[var(--accent)] hover:underline">Settings</a> to receive automatic payouts.
             </p>
           </div>
         )}
