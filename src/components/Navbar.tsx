@@ -116,6 +116,9 @@ export function Navbar() {
             <Link href="/new" className={navLinkClass}>
               New
             </Link>
+            <a href="https://studio.realtimedatamonitoring.com.au" target="_blank" rel="noopener noreferrer" className={navLinkClass}>
+              RDM Studio
+            </a>
 
             {/* More dropdown */}
             <div className="relative" ref={moreRef}>
@@ -267,6 +270,9 @@ export function Navbar() {
           <Link href="/browse?type=dbc" className="block text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text)]" onClick={() => setMobileMenuOpen(false)}>
             DBC Files
           </Link>
+          <a href="https://studio.realtimedatamonitoring.com.au" target="_blank" rel="noopener noreferrer" className="block text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text)]" onClick={() => setMobileMenuOpen(false)}>
+            RDM Studio
+          </a>
           <Link href="/collections" className="block text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text)]" onClick={() => setMobileMenuOpen(false)}>
             My Favorites
           </Link>
