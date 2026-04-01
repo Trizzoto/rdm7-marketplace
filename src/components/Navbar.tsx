@@ -116,8 +116,11 @@ export function Navbar() {
             <Link href="/new" className={navLinkClass}>
               New
             </Link>
-            <a href="https://studio.realtimedatamonitoring.com.au" target="_blank" rel="noopener noreferrer" className={navLinkClass}>
+            <a href="https://studio.realtimedatamonitoring.com.au" target="_blank" rel="noopener noreferrer" className="font-heading text-sm font-bold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text)] transition-colors flex items-center gap-1">
               RDM Studio
+              <svg className="w-3 h-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
             </a>
 
             {/* More dropdown */}
@@ -270,8 +273,11 @@ export function Navbar() {
           <Link href="/browse?type=dbc" className="block text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text)]" onClick={() => setMobileMenuOpen(false)}>
             DBC Files
           </Link>
-          <a href="https://studio.realtimedatamonitoring.com.au" target="_blank" rel="noopener noreferrer" className="block text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text)]" onClick={() => setMobileMenuOpen(false)}>
+          <a href="https://studio.realtimedatamonitoring.com.au" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 font-heading text-sm font-bold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--text)]" onClick={() => setMobileMenuOpen(false)}>
             RDM Studio
+            <svg className="w-3 h-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
           </a>
           <Link href="/collections" className="block text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text)]" onClick={() => setMobileMenuOpen(false)}>
             My Favorites
