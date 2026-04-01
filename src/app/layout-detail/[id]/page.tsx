@@ -54,11 +54,13 @@ export default async function LayoutDetailPage({ params }: { params: Promise<{ i
       </nav>
 
       {/* Screenshot */}
-      <div className="bg-[#0a0a0c] border border-[var(--border)] rounded-card overflow-hidden mb-8 shadow-sm max-w-3xl mx-auto">
+      <div className="mb-8 flex justify-center">
         {layout.screenshot_url ? (
-          <img src={layout.screenshot_url} alt={layout.name} className="w-full h-auto block" style={{ maxHeight: '420px', objectFit: 'contain' }} />
+          <div className="border border-[var(--border)] rounded-card overflow-hidden shadow-sm">
+            <img src={layout.screenshot_url} alt={layout.name} className="block" style={{ maxWidth: '100%', maxHeight: '420px' }} />
+          </div>
         ) : (
-          <div className="aspect-[16/9] flex items-center justify-center text-[var(--text-muted)]">
+          <div className="w-full max-w-md aspect-[16/9] flex items-center justify-center text-[var(--text-muted)] bg-[#0a0a0c] rounded-card border border-[var(--border)]">
             <span className="font-heading text-2xl font-bold uppercase text-gray-600">
               {isDbc ? ".dbc" : "No Preview"}
             </span>

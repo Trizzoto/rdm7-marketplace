@@ -645,13 +645,13 @@ export function UploadForm({
                 </label>
 
                 {previewScreenshotUrl && (
-                  <div className="mb-3 rounded-card overflow-hidden border border-[var(--border)] bg-[#0a0a0c] max-w-md">
+                  <div className="mb-3 inline-block rounded-card overflow-hidden border border-[var(--border)]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={previewScreenshotUrl}
                       alt="Layout preview"
-                      className="w-full h-auto block"
-                      style={{ maxHeight: '280px', objectFit: 'contain' }}
+                      className="block"
+                      style={{ maxWidth: '100%', maxHeight: '280px' }}
                     />
                   </div>
                 )}
