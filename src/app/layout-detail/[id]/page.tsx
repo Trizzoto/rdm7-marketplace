@@ -165,9 +165,9 @@ export default async function LayoutDetailPage({ params }: { params: Promise<{ i
             {relatedLayouts.map((l) => (
               <Link key={l.id} href={`/layout-detail/${l.id}`} className="block group">
                 <div className="bg-[var(--surface)] border border-[var(--border)] rounded-card overflow-hidden transition-all duration-300 ease-out hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02]">
-                  <div className={`${l.item_type === "dbc" ? "aspect-[3/1]" : "aspect-[5/3]"} bg-[#0a0a0c] relative overflow-hidden`}>
+                  <div className={`${l.item_type === "dbc" ? "aspect-[3/1]" : "aspect-[16/9]"} bg-[#0a0a0c] relative overflow-hidden`}>
                     {l.item_type !== "dbc" && l.screenshot_url ? (
-                      <img src={l.screenshot_url} alt={l.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <img src={l.screenshot_url} alt={l.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <span className="font-heading text-2xl font-bold text-gray-600 uppercase">
@@ -178,7 +178,7 @@ export default async function LayoutDetailPage({ params }: { params: Promise<{ i
                     {l.price === 0 ? (
                       <span className="absolute top-2 right-2 bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">FREE</span>
                     ) : (
-                      <span className="absolute top-2 right-2 bg-[var(--accent)] text-white text-[10px] font-bold px-2 py-0.5 rounded">${l.price.toFixed(2)}</span>
+                      <span className="absolute top-2 right-2 bg-[var(--text)] text-white text-[10px] font-bold px-2 py-0.5 rounded">${l.price.toFixed(2)}</span>
                     )}
                   </div>
                   <div className="p-4">

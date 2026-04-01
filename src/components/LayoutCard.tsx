@@ -11,12 +11,12 @@ export function LayoutCard({ layout }: { layout: Layout }) {
     <Link href={`/layout-detail/${layout.id}`} className="block group">
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-card overflow-hidden transition-all duration-300 ease-out hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02]">
         {/* Screenshot / DBC placeholder */}
-        <div className={`${isDbc ? "aspect-[3/1]" : "aspect-[5/3]"} bg-[#0a0a0c] relative overflow-hidden`}>
+        <div className={`${isDbc ? "aspect-[3/1]" : "aspect-[16/9]"} bg-[#0a0a0c] relative overflow-hidden`}>
           {!isDbc && layout.screenshot_url ? (
             <img
               src={layout.screenshot_url}
               alt={layout.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 ease-out"
             />
           ) : isDbc ? (
             <div className="w-full h-full flex items-center justify-center gap-3">
