@@ -203,12 +203,12 @@ export function EditForm({
             Screenshot
           </label>
           {currentScreenshot && (
-            <div className="mb-3 rounded-lg overflow-hidden border border-[var(--border)] bg-[#0a0a0c]">
+            <div className="mb-3 rounded-lg overflow-hidden border border-[var(--border)] bg-[#0a0a0c] max-w-md">
               <img
                 src={currentScreenshot}
                 alt="Layout preview"
-                className="w-full h-auto"
-                style={{ maxWidth: "800px", maxHeight: "480px", objectFit: "contain" }}
+                className="w-full h-auto block"
+                style={{ maxHeight: "280px", objectFit: "contain" }}
               />
             </div>
           )}

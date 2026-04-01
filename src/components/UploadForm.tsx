@@ -645,13 +645,13 @@ export function UploadForm({
                 </label>
 
                 {previewScreenshotUrl && (
-                  <div className="mb-3 rounded-card overflow-hidden border border-[var(--border)]">
+                  <div className="mb-3 rounded-card overflow-hidden border border-[var(--border)] bg-[#0a0a0c] max-w-md">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={previewScreenshotUrl}
                       alt="Layout preview"
-                      className="w-full h-auto"
-                      style={{ maxWidth: '800px', maxHeight: '480px', objectFit: 'contain' }}
+                      className="w-full h-auto block"
+                      style={{ maxHeight: '280px', objectFit: 'contain' }}
                     />
                   </div>
                 )}
@@ -840,10 +840,10 @@ export function UploadForm({
           {/* Mock LayoutCard-style preview */}
           <div className="max-w-sm mx-auto mb-8">
             <div className="bg-[var(--surface)] border border-[var(--border)] rounded-card overflow-hidden">
-              <div className={`${itemType === "dbc" ? "aspect-[3/1]" : "aspect-[5/3]"} bg-[#0a0a0c] relative overflow-hidden`}>
+              <div className={`${itemType === "dbc" ? "aspect-[3/1]" : "aspect-[16/9]"} bg-[#0a0a0c] relative overflow-hidden`}>
                 {previewScreenshotUrl && itemType === "layout" ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={previewScreenshotUrl} alt={name} className="w-full h-full object-cover" />
+                  <img src={previewScreenshotUrl} alt={name} className="w-full h-full object-contain" />
                 ) : itemType === "dbc" ? (
                   <div className="w-full h-full flex items-center justify-center gap-3">
                     <span className="font-heading text-3xl font-bold text-gray-600 uppercase">.dbc</span>
