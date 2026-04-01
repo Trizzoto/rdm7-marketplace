@@ -37,7 +37,7 @@ export function LayoutCard({ layout }: { layout: Layout }) {
               FREE
             </span>
           ) : (
-            <span className="absolute top-2 right-2 bg-[var(--accent)] text-white text-[10px] font-bold px-2 py-0.5 rounded">
+            <span className="absolute top-2 right-2 bg-[var(--text)] text-white text-[10px] font-bold px-2 py-0.5 rounded">
               ${layout.price.toFixed(2)}
             </span>
           )}
