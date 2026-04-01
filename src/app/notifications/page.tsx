@@ -1,54 +1,21 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { supabase } from "@/lib/supabase";
 
-type NotificationType = "download" | "rating" | "payment" | "system";
+type NotificationType = "download" | "rating" | "sale" | "welcome" | "system";
 
 interface Notification {
   id: string;
   type: NotificationType;
   title: string;
   message: string;
-  detail: string;
   read: boolean;
-  createdAt: string;
+  created_at: string;
   link?: string;
 }
 
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: "1", type: "download", title: "Layout Downloaded",
-    message: 'Your layout "MaxxECU Street Dash" was downloaded.',
-    detail: 'A user downloaded your "MaxxECU Street Dash" layout. This is your 47th download for this layout. Keep it up — popular layouts get featured on the homepage!',
-    read: false, createdAt: "2026-03-31T08:15:00Z", link: "/dashboard",
-  },
-  {
-    id: "2", type: "rating", title: "New 5-Star Rating",
-    message: '"Haltech Pro Gauge Set" received a 5-star review.',
-    detail: 'A user left a 5-star review on your "Haltech Pro Gauge Set" layout with the comment: "Perfect layout for track days, clean and easy to read at speed." Your average rating is now 4.8 stars.',
-    read: false, createdAt: "2026-03-30T16:42:00Z", link: "/dashboard",
-  },
-  {
-    id: "3", type: "payment", title: "Payment Received — $4.50",
-    message: 'Sale of "MoTeC Race Dash" — you earned $4.50.',
-    detail: 'A buyer purchased your "MoTeC Race Dash" layout for $5.00. After the 15% platform fee ($0.75), you received $4.25. Funds will be deposited to your connected Stripe account within 2 business days.',
-    read: false, createdAt: "2026-03-30T10:30:00Z", link: "/dashboard",
-  },
-  {
-    id: "4", type: "system", title: "Welcome to RDM-7 Marketplace",
-    message: "Your account is set up and ready to go.",
-    detail: "Welcome! You can now browse and download layouts, upload your own designs, and connect your Stripe account to sell premium layouts. Head to your Dashboard to get started.",
-    read: true, createdAt: "2026-03-28T09:00:00Z", link: "/dashboard",
-  },
-  {
-    id: "5", type: "download", title: "DBC File Downloaded",
-    message: '"BMW E90 CAN Database" was downloaded.',
-    detail: 'Your DBC file "BMW E90 CAN Database" was downloaded by a user. This file has been downloaded 23 times total.',
-    read: true, createdAt: "2026-03-27T14:20:00Z",
-  },
-];
-
-const typeIcons: Record<NotificationType, React.ReactNode> = {
+const typeIcons: Record<string, React.ReactNode> = {
   download: (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -59,9 +26,14 @@ const typeIcons: Record<NotificationType, React.ReactNode> = {
       <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
     </svg>
   ),
-  payment: (
+  sale: (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  ),
+  welcome: (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
   ),
   system: (
@@ -87,13 +59,11 @@ function formatTimeAgo(dateStr: string): string {
 
 /* ── Swipeable Notification Row ───────────────────────────── */
 function SwipeableNotification({
-  notification, onDelete, onRead, expanded, onToggleExpand,
+  notification, onDelete, onRead,
 }: {
   notification: Notification;
   onDelete: (id: string) => void;
   onRead: (id: string) => void;
-  expanded: boolean;
-  onToggleExpand: (id: string) => void;
 }) {
   const rowRef = useRef<HTMLDivElement>(null);
   const startX = useRef(0);
@@ -134,7 +104,7 @@ function SwipeableNotification({
   const handleClick = () => {
     if (Math.abs(currentX.current) > 5) return;
     if (!notification.read) onRead(notification.id);
-    onToggleExpand(notification.id);
+    if (notification.link) window.location.href = notification.link;
   };
 
   return (
@@ -156,21 +126,19 @@ function SwipeableNotification({
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
         onClick={handleClick}
-        className={`relative z-10 cursor-pointer select-none border transition-colors duration-200 bg-[var(--surface)] border-[var(--border)] ${
-          !notification.read
-            ? "hover:border-[var(--accent)]"
-            : ""
-        } ${expanded ? "rounded-t-card" : "rounded-card"}`}
+        className={`relative z-10 cursor-pointer select-none border transition-colors duration-200 bg-[var(--surface)] border-[var(--border)] rounded-card ${
+          !notification.read ? "hover:border-[var(--accent)]" : ""
+        }`}
         style={{ willChange: 'transform' }}
       >
-        <div className="flex items-start gap-3 p-4">
+        <div className="flex items-center gap-3 p-4">
           {/* Icon */}
           <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
             !notification.read
               ? "bg-[var(--accent)] text-white"
               : "bg-[var(--bg)] text-[var(--text-muted)]"
           }`}>
-            {typeIcons[notification.type]}
+            {typeIcons[notification.type] || typeIcons.system}
           </div>
 
           {/* Content */}
@@ -192,52 +160,20 @@ function SwipeableNotification({
             </p>
           </div>
 
-          {/* Time + chevron */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Time + delete */}
+          <div className="flex items-center gap-3 shrink-0">
             <span className="text-xs text-[var(--text-muted)] whitespace-nowrap">
-              {formatTimeAgo(notification.createdAt)}
+              {formatTimeAgo(notification.created_at)}
             </span>
-            <svg
-              className={`w-3.5 h-3.5 text-[var(--text-muted)] transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
-              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(notification.id); }}
+              className="text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors hidden sm:block"
+              title="Delete"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      {/* Expanded detail */}
-      <div
-        className={`relative z-10 overflow-hidden transition-all duration-300 ease-in-out ${
-          expanded ? "max-h-60 opacity-100" : "max-h-0 opacity-0"
-        }`}
-      >
-        <div className="bg-[var(--surface)] border border-t-0 border-[var(--border)] rounded-b-card px-4 pb-4 pt-2">
-          <p className="text-sm text-[var(--text-muted)] leading-relaxed">
-            {notification.detail}
-          </p>
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-[var(--border)]">
-            <span className="text-xs text-[var(--text-muted)]">
-              {new Date(notification.createdAt).toLocaleString()}
-            </span>
-            <div className="flex gap-3">
-              {notification.link && (
-                <a
-                  href={notification.link}
-                  onClick={(e) => e.stopPropagation()}
-                  className="text-xs font-heading font-bold uppercase tracking-wider text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
-                >
-                  View Details
-                </a>
-              )}
-              <button
-                onClick={(e) => { e.stopPropagation(); onDelete(notification.id); }}
-                className="text-xs font-heading font-bold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors"
-              >
-                Delete
-              </button>
-            </div>
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
@@ -247,27 +183,70 @@ function SwipeableNotification({
 
 /* ── Main Page ────────────────────────────────────────────── */
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setUserId(data.user.id);
+        fetchNotifications();
+      } else {
+        setLoading(false);
+      }
+    });
+  }, []);
+
+  const fetchNotifications = async () => {
+    const { data } = await supabase
+      .from("notifications")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    setNotifications((data as Notification[]) || []);
+    setLoading(false);
+  };
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const markAsRead = (id: string) => {
+  const markAsRead = async (id: string) => {
+    await supabase.from("notifications").update({ read: true }).eq("id", id);
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   };
 
-  const markAllAsRead = () => {
+  const markAllAsRead = async () => {
+    if (!userId) return;
+    await supabase.from("notifications").update({ read: true }).eq("read", false);
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
-  const deleteNotification = (id: string) => {
+  const deleteNotification = async (id: string) => {
+    await supabase.from("notifications").delete().eq("id", id);
     setNotifications((prev) => prev.filter((n) => n.id !== id));
-    if (expandedId === id) setExpandedId(null);
   };
 
-  const toggleExpand = (id: string) => {
-    setExpandedId((prev) => (prev === id ? null : id));
+  const clearAll = async () => {
+    if (!userId) return;
+    await supabase.from("notifications").delete().neq("id", "");
+    setNotifications([]);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-32">
+        <div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!userId) {
+    return (
+      <div className="max-w-2xl mx-auto text-center py-20">
+        <p className="text-[var(--text-muted)]">Sign in to view your notifications.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -292,7 +271,7 @@ export default function NotificationsPage() {
           )}
           {notifications.length > 0 && (
             <button
-              onClick={() => setNotifications([])}
+              onClick={clearAll}
               className="text-xs font-heading font-bold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors"
             >
               Clear all
@@ -313,7 +292,7 @@ export default function NotificationsPage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
           <p className="font-heading text-lg font-bold uppercase text-[var(--text-muted)]">All Clear</p>
-          <p className="text-sm text-[var(--text-muted)] mt-1">No notifications to show.</p>
+          <p className="text-sm text-[var(--text-muted)] mt-1">No notifications yet.</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -323,8 +302,6 @@ export default function NotificationsPage() {
               notification={n}
               onDelete={deleteNotification}
               onRead={markAsRead}
-              expanded={expandedId === n.id}
-              onToggleExpand={toggleExpand}
             />
           ))}
         </div>

@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 
 type Rating = { id: string; score: number; comment: string | null; created_at: string; profiles?: { display_name: string } };
 
-export function RatingSection({ layoutId }: { layoutId: string }) {
+export function RatingSection({ layoutId, layoutName, authorId }: { layoutId: string; layoutName?: string; authorId?: string }) {
   const [ratings, setRatings] = useState<Rating[]>([]);
   const [myScore, setMyScore] = useState(0);
   const [myComment, setMyComment] = useState("");
@@ -32,6 +32,17 @@ export function RatingSection({ layoutId }: { layoutId: string }) {
       score: myScore,
       comment: myComment || null,
     });
+    // Notify the layout author about the new rating
+    if (authorId && authorId !== userId) {
+      await supabase.from("notifications").insert({
+        user_id: authorId,
+        type: "rating",
+        title: `New ${myScore}-Star Review`,
+        message: `"${layoutName || "Your layout"}" received a ${myScore}-star review.`,
+        link: `/layout-detail/${layoutId}`,
+      });
+    }
+
     setSubmitting(false);
     // Refresh
     const { data } = await supabase

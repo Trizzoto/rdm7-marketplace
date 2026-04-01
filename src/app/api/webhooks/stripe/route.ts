@@ -77,6 +77,25 @@ export async function POST(req: NextRequest) {
       // Increment download count on the layout
       await supabaseAdmin.rpc("increment_downloads", { layout_id: layoutId });
 
+      // Create sale notification for the seller
+      const { data: layoutData } = await supabaseAdmin
+        .from("layouts")
+        .select("author_id, name")
+        .eq("id", layoutId)
+        .single();
+
+      if (layoutData?.author_id) {
+        const earningsCents = amountTotal - platformFee;
+        const earningsFormatted = (earningsCents / 100).toFixed(2);
+        await supabaseAdmin.from("notifications").insert({
+          user_id: layoutData.author_id,
+          type: "sale",
+          title: `Sale — $${earningsFormatted}`,
+          message: `Your "${layoutData.name}" was purchased. You earned $${earningsFormatted}.`,
+          link: "/dashboard",
+        });
+      }
+
       console.log(`Payment completed: layout=${layoutId} amount=${amountTotal} buyer=${buyerEmail}`);
     }
 

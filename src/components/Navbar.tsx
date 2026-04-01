@@ -12,19 +12,35 @@ export function Navbar() {
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
 
-  // Stub notification count — replace with real Supabase query later
-  const notificationCount = 3;
+  const [notificationCount, setNotificationCount] = useState(0);
+
+  const fetchNotificationCount = async () => {
+    const { count } = await supabase
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("read", false);
+    setNotificationCount(count || 0);
+  };
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
-      if (data.user) ensureProfileExists(data.user);
+      if (data.user) {
+        ensureProfileExists(data.user);
+        fetchNotificationCount();
+      }
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) ensureProfileExists(session.user);
+      if (session?.user) {
+        ensureProfileExists(session.user);
+        fetchNotificationCount();
+      } else {
+        setNotificationCount(0);
+      }
     });
     return () => listener.subscription.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function ensureProfileExists(u: User) {

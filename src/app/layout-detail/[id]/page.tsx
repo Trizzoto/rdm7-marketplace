@@ -115,7 +115,7 @@ export default async function LayoutDetailPage({ params }: { params: Promise<{ i
           {/* Ratings */}
           <div className="bg-[var(--surface)] border border-[var(--border)] rounded-card p-6">
             <h3 className="font-heading text-lg font-bold uppercase mb-4">Reviews</h3>
-            <RatingSection layoutId={layout.id} />
+            <RatingSection layoutId={layout.id} layoutName={layout.name} authorId={layout.author_id} />
           </div>
         </div>
 
