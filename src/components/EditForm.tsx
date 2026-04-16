@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Layout } from "@/lib/supabase";
+import { UploadNewVersion } from "./UploadNewVersion";
 
 const ECU_TYPES = ["MaxxECU", "Haltech", "Link", "AEM", "MoTeC", "Ecumaster", "Custom"];
 
@@ -115,6 +116,19 @@ export function EditForm({
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg p-3 mb-4">
           {error}
+        </div>
+      )}
+
+      {/* New version upload (#27) — only for .rdm layouts, not DBC files */}
+      {!isDbc && (
+        <div className="mb-5">
+          <UploadNewVersion
+            layoutId={layout.id}
+            layoutName={layout.name}
+            currentVersion={layout.version ?? 1}
+            authorId={layout.author_id}
+            onComplete={onSuccess}
+          />
         </div>
       )}
 

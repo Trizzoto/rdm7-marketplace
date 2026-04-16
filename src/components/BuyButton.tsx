@@ -2,6 +2,7 @@
 
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
+import { OpenInStudioButton } from "./OpenInStudioButton";
 
 type BuyButtonProps = {
   layoutId: string;
@@ -102,16 +103,21 @@ export function BuyButton({ layoutId, rdmUrl, name, price, itemType }: BuyButton
     }
   };
 
-  // Free item
+  // Free item — skip Studio buttons for DBC files since Studio imports .rdm only
   if (isFree) {
     return (
-      <button
-        onClick={handleDownload}
-        disabled={!rdmUrl || loading}
-        className="w-full bg-[var(--accent)] text-white font-heading font-bold py-3 rounded-lg hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed uppercase text-sm tracking-wide"
-      >
-        {loading ? "Downloading..." : "Download"}
-      </button>
+      <>
+        <button
+          onClick={handleDownload}
+          disabled={!rdmUrl || loading}
+          className="w-full bg-[var(--accent)] text-white font-heading font-bold py-3 rounded-lg hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed uppercase text-sm tracking-wide"
+        >
+          {loading ? "Downloading..." : "Download"}
+        </button>
+        {itemType !== "dbc" && (
+          <OpenInStudioButton layoutId={layoutId} rdmUrl={rdmUrl} name={name} isAccessible={true} />
+        )}
+      </>
     );
   }
 
@@ -141,6 +147,9 @@ export function BuyButton({ layoutId, rdmUrl, name, price, itemType }: BuyButton
         >
           {loading ? "Downloading..." : "Download"}
         </button>
+        {itemType !== "dbc" && (
+          <OpenInStudioButton layoutId={layoutId} rdmUrl={rdmUrl} name={name} isAccessible={true} />
+        )}
       </div>
     );
   }

@@ -5,3 +5,7 @@ node_modules/
 out/
 
 .vercel
+
+# TypeScript incremental build info
+*.tsbuildinfo
+tsconfig.tsbuildinfo

@@ -338,27 +338,45 @@ export function UploadForm({
       const vehicleTags = [vehicleMake, vehicleModel, vehicleYear].filter(Boolean);
 
       // 4. Insert record
-      const { error: dbErr } = await supabase.from("layouts").insert({
-        author_id: userId,
-        item_type: itemType,
-        name,
-        description: description || null,
-        ecu_type: ecuType || null,
-        tags: tagList,
-        screenshot_url: screenshotUrl || null,
-        rdm_url: fileUrlData.publicUrl,
-        file_size_bytes: file.size,
-        widget_count: parsedRdm?.widgetCount || 0,
-        signal_count: parsedRdm?.signalCount || 0,
-        price: priceNum,
-        is_published: true,
-        vehicle_tags: vehicleTags,
-        can_speed: canSpeed || null,
-        compatibility_notes: compatibilityNotes || null,
-        dbc_signal_count: parsedDbc?.signalCount || 0,
-        dbc_can_ids: parsedDbc ? parsedDbc.canIds.join(",") : null,
-      });
+      const { data: inserted, error: dbErr } = await supabase
+        .from("layouts")
+        .insert({
+          author_id: userId,
+          item_type: itemType,
+          name,
+          description: description || null,
+          ecu_type: ecuType || null,
+          tags: tagList,
+          screenshot_url: screenshotUrl || null,
+          rdm_url: fileUrlData.publicUrl,
+          file_size_bytes: file.size,
+          widget_count: parsedRdm?.widgetCount || 0,
+          signal_count: parsedRdm?.signalCount || 0,
+          price: priceNum,
+          is_published: true,
+          version: 1,
+          vehicle_tags: vehicleTags,
+          can_speed: canSpeed || null,
+          compatibility_notes: compatibilityNotes || null,
+          dbc_signal_count: parsedDbc?.signalCount || 0,
+          dbc_can_ids: parsedDbc ? parsedDbc.canIds.join(",") : null,
+        })
+        .select("id")
+        .single();
       if (dbErr) throw new Error(dbErr.message || "Database insert failed");
+
+      // 5. Insert v1 into layout_versions so the versioning system has a starting point
+      if (inserted?.id && itemType === "layout") {
+        await supabase.from("layout_versions").insert({
+          layout_id: inserted.id,
+          version: 1,
+          rdm_url: fileUrlData.publicUrl,
+          file_size_bytes: file.size,
+          widget_count: parsedRdm?.widgetCount || 0,
+          signal_count: parsedRdm?.signalCount || 0,
+          notes: null,
+        });
+      }
 
       showToast("Your listing has been published!", "success");
       onSuccess();

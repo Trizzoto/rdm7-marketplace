@@ -1,8 +1,9 @@
 import { supabase } from "@/lib/supabase";
 import { notFound } from "next/navigation";
-import type { Layout } from "@/lib/supabase";
+import type { Layout, LayoutVersion } from "@/lib/supabase";
 import { BuyButton } from "@/components/BuyButton";
 import { RatingSection } from "@/components/RatingSection";
+import { LivePreview } from "@/components/LivePreview";
 import Link from "next/link";
 
 export const revalidate = 30;
@@ -14,6 +15,16 @@ async function getLayout(id: string): Promise<Layout | null> {
     .eq("id", id)
     .single();
   return data as Layout | null;
+}
+
+async function getVersionHistory(layoutId: string): Promise<LayoutVersion[]> {
+  const { data } = await supabase
+    .from("layout_versions")
+    .select("*")
+    .eq("layout_id", layoutId)
+    .order("version", { ascending: false })
+    .limit(10);
+  return (data as LayoutVersion[]) || [];
 }
 
 async function getRelatedLayouts(layout: Layout): Promise<Layout[]> {
@@ -33,12 +44,20 @@ export default async function LayoutDetailPage({ params }: { params: Promise<{ i
   const layout = await getLayout(id);
   if (!layout) notFound();
 
-  const relatedLayouts = await getRelatedLayouts(layout);
+  const [relatedLayouts, versionHistory] = await Promise.all([
+    getRelatedLayouts(layout),
+    getVersionHistory(layout.id),
+  ]);
   const sizeKB = (layout.file_size_bytes / 1024).toFixed(1);
   const isDbc = layout.item_type === "dbc";
   const uploadDate = new Date(layout.created_at).toLocaleDateString("en-AU", {
     day: "numeric", month: "short", year: "numeric",
   });
+  const lastVersionDate = layout.last_version_at
+    ? new Date(layout.last_version_at).toLocaleDateString("en-AU", {
+        day: "numeric", month: "short", year: "numeric",
+      })
+    : null;
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -53,8 +72,8 @@ export default async function LayoutDetailPage({ params }: { params: Promise<{ i
         <span className="text-[var(--text)]">{layout.name}</span>
       </nav>
 
-      {/* Screenshot */}
-      <div className="mb-8 flex justify-center">
+      {/* Screenshot + Live Preview */}
+      <div className="mb-8 flex flex-col items-center gap-3">
         {layout.screenshot_url ? (
           <div className="border border-[var(--border)] rounded-card overflow-hidden shadow-sm">
             <img src={layout.screenshot_url} alt={layout.name} className="block" style={{ maxWidth: '100%', maxHeight: '420px' }} />
@@ -66,6 +85,7 @@ export default async function LayoutDetailPage({ params }: { params: Promise<{ i
             </span>
           </div>
         )}
+        {!isDbc && <LivePreview rdmUrl={layout.rdm_url} name={layout.name} />}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -130,6 +150,10 @@ export default async function LayoutDetailPage({ params }: { params: Promise<{ i
 
             <div className="mt-6 pt-6 border-t border-[var(--border)] space-y-3 text-sm text-[var(--text-muted)]">
               <div className="flex justify-between">
+                <span>Version</span>
+                <span className="font-medium text-[var(--text)]">v{layout.version ?? 1}</span>
+              </div>
+              <div className="flex justify-between">
                 <span>Downloads</span>
                 <span className="font-medium text-[var(--text)]">{layout.downloads}</span>
               </div>
@@ -147,8 +171,34 @@ export default async function LayoutDetailPage({ params }: { params: Promise<{ i
                 <span>Uploaded</span>
                 <span className="font-medium text-[var(--text)]">{uploadDate}</span>
               </div>
+              {lastVersionDate && lastVersionDate !== uploadDate && (
+                <div className="flex justify-between">
+                  <span>Updated</span>
+                  <span className="font-medium text-[var(--text)]">{lastVersionDate}</span>
+                </div>
+              )}
             </div>
           </div>
+
+          {/* Version History */}
+          {versionHistory.length > 1 && (
+            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-card p-6 shadow-sm">
+              <h3 className="font-heading text-sm font-bold uppercase mb-4">Version History</h3>
+              <ul className="space-y-3 text-sm">
+                {versionHistory.map((v) => (
+                  <li key={v.id} className="border-l-2 border-[var(--border)] pl-3">
+                    <div className="flex items-baseline justify-between">
+                      <span className="font-medium text-[var(--text)]">v{v.version}</span>
+                      <span className="text-xs text-[var(--text-muted)]">
+                        {new Date(v.created_at).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}
+                      </span>
+                    </div>
+                    {v.notes && <p className="text-xs text-[var(--text-muted)] mt-1">{v.notes}</p>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
 

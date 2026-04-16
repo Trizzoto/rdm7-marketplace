@@ -29,9 +29,24 @@ export type Layout = {
   dbc_can_ids: string | null;
   is_published: boolean;
   schema_version: number;
+  version: number; // added in migration 008
+  version_notes: string | null;
+  last_version_at: string | null;
   created_at: string;
   updated_at: string;
   profiles?: { display_name: string; avatar_url: string | null };
+};
+
+export type LayoutVersion = {
+  id: string;
+  layout_id: string;
+  version: number;
+  rdm_url: string;
+  file_size_bytes: number;
+  widget_count: number;
+  signal_count: number;
+  notes: string | null;
+  created_at: string;
 };
 
 export type Profile = {
