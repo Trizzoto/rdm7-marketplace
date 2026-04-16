@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import type { Layout, LayoutVersion } from "@/lib/supabase";
 import { BuyButton } from "@/components/BuyButton";
 import { RatingSection } from "@/components/RatingSection";
-import { LivePreview } from "@/components/LivePreview";
 import Link from "next/link";
 
 export const revalidate = 30;
@@ -72,8 +71,8 @@ export default async function LayoutDetailPage({ params }: { params: Promise<{ i
         <span className="text-[var(--text)]">{layout.name}</span>
       </nav>
 
-      {/* Screenshot + Live Preview */}
-      <div className="mb-8 flex flex-col items-center gap-3">
+      {/* Screenshot */}
+      <div className="mb-8 flex justify-center">
         {layout.screenshot_url ? (
           <div className="border border-[var(--border)] rounded-card overflow-hidden shadow-sm">
             <img src={layout.screenshot_url} alt={layout.name} className="block" style={{ maxWidth: '100%', maxHeight: '420px' }} />
@@ -85,7 +84,6 @@ export default async function LayoutDetailPage({ params }: { params: Promise<{ i
             </span>
           </div>
         )}
-        {!isDbc && <LivePreview rdmUrl={layout.rdm_url} name={layout.name} />}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
