@@ -176,6 +176,17 @@ export default async function LayoutDetailPage({ params }: { params: Promise<{ i
                   <span className="font-medium text-[var(--text)]">{lastVersionDate}</span>
                 </div>
               )}
+              {layout.has_night_mode && (
+                <div className="flex justify-between">
+                  <span>Night Mode</span>
+                  <span
+                    className="font-medium text-indigo-300"
+                    title="Includes per-widget appearance overrides for night-mode driving"
+                  >
+                    🌙 Supported
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 

@@ -29,6 +29,7 @@ export type Layout = {
   dbc_can_ids: string | null;
   is_published: boolean;
   schema_version: number;
+  has_night_mode: boolean; // added in migration 009
   version: number; // added in migration 008
   version_notes: string | null;
   last_version_at: string | null;

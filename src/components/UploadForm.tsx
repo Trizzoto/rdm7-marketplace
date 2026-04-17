@@ -16,6 +16,7 @@ interface ParsedRdm {
   widgetCount: number;
   signalCount: number;
   ecu: string;
+  hasNightMode: boolean;
 }
 
 interface ParsedDbc {
@@ -169,11 +170,23 @@ export function UploadForm({
         if (type === 0) {
           const json = new TextDecoder().decode(new Uint8Array(buf, offset, dataLen));
           const parsed = JSON.parse(json);
+          // Detect night-mode capability: any widget with a non-empty `night`
+          // block, OR a layout-level `night_mode` trigger binding.
+          const hasNight =
+            (Array.isArray(parsed.widgets) &&
+              parsed.widgets.some(
+                (w: { config?: { night?: Record<string, unknown> } }) =>
+                  w?.config?.night && Object.keys(w.config.night).length > 0
+              )) ||
+            (parsed.night_mode &&
+              typeof parsed.night_mode.signal_name === "string" &&
+              parsed.night_mode.signal_name.length > 0);
           const result: ParsedRdm = {
             name: parsed.name || f.name.replace(/\.rdm$/i, ""),
             widgetCount: parsed.widgets?.length || 0,
             signalCount: parsed.signals?.length || 0,
             ecu: parsed.ecu || "",
+            hasNightMode: !!hasNight,
           };
           setParsedRdm(result);
           setName(result.name);
@@ -188,6 +201,7 @@ export function UploadForm({
         widgetCount: 0,
         signalCount: 0,
         ecu: "",
+        hasNightMode: false,
       });
       setName(f.name.replace(/\.rdm$/i, ""));
     } catch {
@@ -196,6 +210,7 @@ export function UploadForm({
         widgetCount: 0,
         signalCount: 0,
         ecu: "",
+        hasNightMode: false,
       });
       setName(f.name.replace(/\.rdm$/i, ""));
     }
@@ -361,6 +376,7 @@ export function UploadForm({
           compatibility_notes: compatibilityNotes || null,
           dbc_signal_count: parsedDbc?.signalCount || 0,
           dbc_can_ids: parsedDbc ? parsedDbc.canIds.join(",") : null,
+          has_night_mode: parsedRdm?.hasNightMode || false,
         })
         .select("id")
         .single();

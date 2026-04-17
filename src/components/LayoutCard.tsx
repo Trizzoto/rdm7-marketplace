@@ -39,6 +39,14 @@ export function LayoutCard({ layout }: { layout: Layout }) {
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${badgeClass}`}>
               {badgeLabel}
             </span>
+            {layout.has_night_mode && (
+              <span
+                className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-900/80 text-indigo-100"
+                title="This layout includes night-mode appearance overrides"
+              >
+                🌙 NIGHT
+              </span>
+            )}
           </div>
           {layout.price === 0 ? (
             <span className="absolute top-2 right-2 bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">
