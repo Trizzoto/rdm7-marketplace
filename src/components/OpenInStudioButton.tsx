@@ -3,10 +3,10 @@
 /**
  * OpenInStudioButton — deep-links to RDM Studio with the layout pre-loaded.
  *
- * Opens https://studio.realtimedatamonitoring.com.au?import=<rdm_url>
- * Studio's receiver fetches the .rdm, imports it through the normal pipeline,
- * and the user lands in the editor with the layout ready. Only shown for
- * layouts the current user has access to (free items or purchased).
+ * Two modes:
+ *  - Full access (free / purchased): Opens Studio normally, user can edit and save.
+ *  - Locked preview (paid, not purchased): Opens Studio in locked preview mode —
+ *    simulation runs, all editing/saving/exporting is disabled, "Buy" overlay shown.
  */
 
 type Props = {
@@ -14,12 +14,14 @@ type Props = {
   rdmUrl: string | null;
   name: string;
   isAccessible: boolean;
+  locked?: boolean;
 };
 
 const STUDIO_BASE = "https://studio.realtimedatamonitoring.com.au";
 
-export function OpenInStudioButton({ layoutId, rdmUrl, name, isAccessible }: Props) {
-  if (!rdmUrl || !isAccessible) return null;
+export function OpenInStudioButton({ layoutId, rdmUrl, name, isAccessible, locked }: Props) {
+  if (!rdmUrl) return null;
+  if (!locked && !isAccessible) return null;
 
   const params = new URLSearchParams({
     import: rdmUrl,
@@ -27,7 +29,31 @@ export function OpenInStudioButton({ layoutId, rdmUrl, name, isAccessible }: Pro
     source: "marketplace",
     layoutId,
   });
+
+  if (locked) {
+    params.set("locked", "1");
+    params.set("autoSim", "1");
+  }
+
   const url = `${STUDIO_BASE}?${params.toString()}`;
+
+  if (locked) {
+    return (
+      <div className="mt-3">
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 w-full text-center bg-[var(--surface)] border border-[var(--border)] text-[var(--text-muted)] font-heading font-bold py-3 rounded-lg hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors uppercase text-sm tracking-wide"
+        >
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <polygon points="6 4 20 12 6 20" />
+          </svg>
+          Preview in Studio
+        </a>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-3">

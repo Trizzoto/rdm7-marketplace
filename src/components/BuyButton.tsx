@@ -154,26 +154,31 @@ export function BuyButton({ layoutId, rdmUrl, name, price, itemType }: BuyButton
     );
   }
 
-  // Not purchased — buy button
+  // Not purchased — buy button + locked preview
   return (
-    <button
-      onClick={handleBuy}
-      disabled={loading}
-      className="w-full bg-[var(--accent)] text-white font-heading font-bold py-3 rounded-lg hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed uppercase text-sm tracking-wide flex items-center justify-center gap-2"
-    >
-      {loading ? (
-        <span className="flex items-center gap-2">
-          <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          Processing...
-        </span>
-      ) : (
-        <>
-          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-          Buy ${price.toFixed(2)}
-        </>
+    <>
+      <button
+        onClick={handleBuy}
+        disabled={loading}
+        className="w-full bg-[var(--accent)] text-white font-heading font-bold py-3 rounded-lg hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed uppercase text-sm tracking-wide flex items-center justify-center gap-2"
+      >
+        {loading ? (
+          <span className="flex items-center gap-2">
+            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            Processing...
+          </span>
+        ) : (
+          <>
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            Buy ${price.toFixed(2)}
+          </>
+        )}
+      </button>
+      {itemType !== "dbc" && (
+        <OpenInStudioButton layoutId={layoutId} rdmUrl={rdmUrl} name={name} isAccessible={false} locked={true} />
       )}
-    </button>
+    </>
   );
 }
