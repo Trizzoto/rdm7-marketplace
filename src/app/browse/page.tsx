@@ -59,11 +59,11 @@ function BrowseContent() {
   return (
     <div>
       <h1 className="text-2xl font-black mb-6">
-        Browse {itemType === "dbc" ? "DBC Files" : "Layouts"}
+        Browse {itemType === "dbc" ? "DBC Files" : itemType === "splash" ? "Splash Screens" : "Layouts"}
       </h1>
 
       {/* Type Toggle */}
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-2 mb-4 flex-wrap">
         <button
           onClick={() => setItemType("layout")}
           className={`px-5 py-2 text-sm font-bold rounded-md transition-colors ${
@@ -84,6 +84,16 @@ function BrowseContent() {
         >
           DBC Files
         </button>
+        <button
+          onClick={() => setItemType("splash")}
+          className={`px-5 py-2 text-sm font-bold rounded-md transition-colors ${
+            itemType === "splash"
+              ? "bg-[var(--accent)] text-white"
+              : "bg-[var(--surface)] border border-[var(--border)] text-[var(--text)] hover:border-[var(--accent)]"
+          }`}
+        >
+          Splash Screens
+        </button>
       </div>
 
       {/* Filters */}
@@ -96,22 +106,24 @@ function BrowseContent() {
           className="bg-[var(--surface)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text)] w-64 focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]"
         />
 
-        {/* Price filter */}
-        <div className="flex gap-1">
-          {["all", "free", "paid"].map((p) => (
-            <button
-              key={p}
-              onClick={() => setPrice(p)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors capitalize ${
-                price === p
-                  ? "border-[var(--accent)] text-[var(--accent)] bg-[var(--accent-light)]"
-                  : "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--accent)]"
-              }`}
-            >
-              {p === "all" ? "All" : p === "free" ? "Free" : "Premium"}
-            </button>
-          ))}
-        </div>
+        {/* Price filter (hidden for splash — always free) */}
+        {itemType !== "splash" && (
+          <div className="flex gap-1">
+            {["all", "free", "paid"].map((p) => (
+              <button
+                key={p}
+                onClick={() => setPrice(p)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors capitalize ${
+                  price === p
+                    ? "border-[var(--accent)] text-[var(--accent)] bg-[var(--accent-light)]"
+                    : "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--accent)]"
+                }`}
+              >
+                {p === "all" ? "All" : p === "free" ? "Free" : "Premium"}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* ECU filter (layouts only) */}
         {itemType === "layout" && (

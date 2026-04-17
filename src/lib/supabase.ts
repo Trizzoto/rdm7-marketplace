@@ -21,7 +21,7 @@ export type Layout = {
   rating: number;
   rating_count: number;
   price: number;
-  item_type: "layout" | "dbc";
+  item_type: "layout" | "dbc" | "splash";
   vehicle_tags: string[];
   can_speed: string | null;
   compatibility_notes: string | null;

@@ -114,7 +114,7 @@ export function BuyButton({ layoutId, rdmUrl, name, price, itemType }: BuyButton
         >
           {loading ? "Downloading..." : "Download"}
         </button>
-        {itemType !== "dbc" && (
+        {itemType !== "dbc" && itemType !== "splash" && (
           <OpenInStudioButton layoutId={layoutId} rdmUrl={rdmUrl} name={name} isAccessible={true} />
         )}
       </>
@@ -147,7 +147,7 @@ export function BuyButton({ layoutId, rdmUrl, name, price, itemType }: BuyButton
         >
           {loading ? "Downloading..." : "Download"}
         </button>
-        {itemType !== "dbc" && (
+        {itemType !== "dbc" && itemType !== "splash" && (
           <OpenInStudioButton layoutId={layoutId} rdmUrl={rdmUrl} name={name} isAccessible={true} />
         )}
       </div>
@@ -176,7 +176,7 @@ export function BuyButton({ layoutId, rdmUrl, name, price, itemType }: BuyButton
           </>
         )}
       </button>
-      {itemType !== "dbc" && (
+      {itemType !== "dbc" && itemType !== "splash" && (
         <OpenInStudioButton layoutId={layoutId} rdmUrl={rdmUrl} name={name} isAccessible={false} locked={true} />
       )}
     </>

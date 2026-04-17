@@ -26,7 +26,7 @@ function DashboardContent() {
   const [stats, setStats] = useState<Stats>({ totalUploads: 0, totalDownloads: 0, avgRating: 0 });
   const [showUpload, setShowUpload] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"layout" | "dbc">("layout");
+  const [activeTab, setActiveTab] = useState<"layout" | "dbc" | "splash">("layout");
 
   // Earnings state
   const [totalEarnings, setTotalEarnings] = useState(0);
@@ -141,6 +141,7 @@ function DashboardContent() {
   const filteredLayouts = layouts.filter((l) => l.item_type === activeTab);
   const layoutCount = layouts.filter((l) => l.item_type === "layout").length;
   const dbcCount = layouts.filter((l) => l.item_type === "dbc").length;
+  const splashCount = layouts.filter((l) => l.item_type === "splash").length;
 
   const statCards = [
     { label: "TOTAL UPLOADS", value: stats.totalUploads.toString(), color: "var(--accent)" },
@@ -257,16 +258,26 @@ function DashboardContent() {
         >
           My DBC Files ({dbcCount})
         </button>
+        <button
+          onClick={() => setActiveTab("splash")}
+          className={`px-5 py-2.5 text-sm font-heading font-bold uppercase tracking-wide rounded-md transition-colors ${
+            activeTab === "splash"
+              ? "bg-[var(--accent)] text-white"
+              : "bg-[var(--surface)] border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)]"
+          }`}
+        >
+          My Splash Screens ({splashCount})
+        </button>
       </div>
 
       {/* Items List */}
       {filteredLayouts.length === 0 ? (
         <div className="text-center py-20 bg-[var(--surface)] border border-[var(--border)] rounded-card">
           <p className="text-[var(--text-muted)] mb-2">
-            No {activeTab === "dbc" ? "DBC files" : "layouts"} yet.
+            No {activeTab === "dbc" ? "DBC files" : activeTab === "splash" ? "splash screens" : "layouts"} yet.
           </p>
           <p className="text-sm text-[var(--text-muted)]">
-            Upload your first {activeTab === "dbc" ? "DBC file" : "layout"} to share it with the community.
+            Upload your first {activeTab === "dbc" ? "DBC file" : activeTab === "splash" ? "splash screen" : "layout"} to share it with the community.
           </p>
         </div>
       ) : (
@@ -312,10 +323,12 @@ function DashboardContent() {
                     className={`text-[10px] font-bold px-2 py-0.5 rounded flex-shrink-0 ${
                       l.item_type === "dbc"
                         ? "bg-blue-100 text-blue-700"
+                        : l.item_type === "splash"
+                        ? "bg-purple-100 text-purple-700"
                         : "bg-gray-100 text-gray-700"
                     }`}
                   >
-                    {l.item_type === "dbc" ? "DBC" : "LAYOUT"}
+                    {l.item_type === "dbc" ? "DBC" : l.item_type === "splash" ? "SPLASH" : "LAYOUT"}
                   </span>
                 </div>
                 <div className="flex items-center gap-4 text-xs text-[var(--text-muted)]">
@@ -338,7 +351,9 @@ function DashboardContent() {
 
               {/* Price */}
               <div className="flex-shrink-0 w-28">
-                {editingPrice === l.id ? (
+                {l.item_type === "splash" ? (
+                  <span className="text-sm text-green-600 font-medium">Free</span>
+                ) : editingPrice === l.id ? (
                   <div className="flex items-center gap-1">
                     <span className="text-sm text-[var(--text-muted)]">$</span>
                     <input

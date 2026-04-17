@@ -150,6 +150,13 @@ export function Navbar() {
                     DBC Files
                   </Link>
                   <Link
+                    href="/browse?type=splash"
+                    className="block px-4 py-2 text-sm text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg)] transition-colors"
+                    onClick={() => setMoreOpen(false)}
+                  >
+                    Splash Screens
+                  </Link>
+                  <Link
                     href="/collections"
                     className="block px-4 py-2 text-sm text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg)] transition-colors"
                     onClick={() => setMoreOpen(false)}
@@ -272,6 +279,9 @@ export function Navbar() {
           </Link>
           <Link href="/browse?type=dbc" className="block text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text)]" onClick={() => setMobileMenuOpen(false)}>
             DBC Files
+          </Link>
+          <Link href="/browse?type=splash" className="block text-sm font-medium text-[var(--text-muted)] hover:text-[var(--text)]" onClick={() => setMobileMenuOpen(false)}>
+            Splash Screens
           </Link>
           <a href="https://studio.realtimedatamonitoring.com.au" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 font-heading text-sm font-bold uppercase tracking-wider text-[var(--text-muted)] hover:text-[var(--accent)]" onClick={() => setMobileMenuOpen(false)}>
             RDM Studio

@@ -125,7 +125,7 @@ export function UploadForm({
   const [step, setStep] = useState(1);
 
   // Step 1 state
-  const [itemType, setItemType] = useState<"layout" | "dbc">("layout");
+  const [itemType, setItemType] = useState<"layout" | "dbc" | "splash">("layout");
   const [file, setFile] = useState<File | null>(null);
   const [parsedRdm, setParsedRdm] = useState<ParsedRdm | null>(null);
   const [parsedDbc, setParsedDbc] = useState<ParsedDbc | null>(null);
@@ -244,12 +244,13 @@ export function UploadForm({
     (f: File) => {
       setFile(f);
       setError("");
-      if (itemType === "layout") {
-        setParsedDbc(null);
-        parseRdmFile(f);
-      } else {
+      if (itemType === "dbc") {
         setParsedRdm(null);
         parseDbcFile(f);
+      } else {
+        // layout or splash — both use .rdm files
+        setParsedDbc(null);
+        parseRdmFile(f);
       }
     },
     [itemType, parseRdmFile, parseDbcFile]
@@ -274,7 +275,7 @@ export function UploadForm({
   );
 
   // Reset file when switching type
-  const switchItemType = useCallback((t: "layout" | "dbc") => {
+  const switchItemType = useCallback((t: "layout" | "dbc" | "splash") => {
     setItemType(t);
     setFile(null);
     setParsedRdm(null);
@@ -352,7 +353,7 @@ export function UploadForm({
           file_size_bytes: file.size,
           widget_count: parsedRdm?.widgetCount || 0,
           signal_count: parsedRdm?.signalCount || 0,
-          price: priceNum,
+          price: itemType === "splash" ? 0 : priceNum,
           is_published: true,
           version: 1,
           vehicle_tags: vehicleTags,
@@ -420,7 +421,7 @@ export function UploadForm({
       {step === 1 && (
         <div>
           {/* Type toggle cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
             <button
               type="button"
               onClick={() => switchItemType("layout")}
@@ -470,6 +471,32 @@ export function UploadForm({
                   DBC File
                 </div>
                 <div className="text-[11px] text-[var(--text-muted)]">.dbc file</div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => switchItemType("splash")}
+              className={`flex items-center gap-3 p-4 rounded-card border-2 transition-all text-left ${
+                itemType === "splash"
+                  ? "border-[var(--accent)] bg-[var(--accent)]/5"
+                  : "border-[var(--border)] bg-[var(--bg)] hover:border-[var(--text-muted)]"
+              }`}
+            >
+              <div
+                className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg ${
+                  itemType === "splash" ? "bg-[var(--accent)] text-white" : "bg-[var(--border)] text-[var(--text-muted)]"
+                }`}
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <div className="font-heading text-sm font-bold uppercase text-[var(--text)]">
+                  Splash Screen
+                </div>
+                <div className="text-[11px] text-[var(--text-muted)]">.rdm file · free only</div>
               </div>
             </button>
           </div>
@@ -591,26 +618,35 @@ export function UploadForm({
                 className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-card px-3 py-2 text-sm text-[var(--text)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]"
               />
             </div>
-            <div>
-              <label className="block text-xs text-[var(--text-muted)] mb-1">Price</label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--text-muted)]">$</span>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  placeholder="0 = Free"
-                  className={`w-full bg-[var(--bg)] border rounded-card pl-7 pr-3 py-2 text-sm text-[var(--text)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] ${
-                    priceValid ? "border-[var(--border)]" : "border-red-500"
-                  }`}
-                />
+            {itemType === "splash" ? (
+              <div>
+                <label className="block text-xs text-[var(--text-muted)] mb-1">Price</label>
+                <div className="bg-[var(--bg)] border border-[var(--border)] rounded-card px-3 py-2 text-sm text-[var(--text-muted)]">
+                  Free (splash screens are always free)
+                </div>
               </div>
-              {!priceValid && (
-                <p className="text-[11px] text-red-500 mt-1">Minimum price is $1.00 (or free at $0)</p>
-              )}
-            </div>
+            ) : (
+              <div>
+                <label className="block text-xs text-[var(--text-muted)] mb-1">Price</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--text-muted)]">$</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    placeholder="0 = Free"
+                    className={`w-full bg-[var(--bg)] border rounded-card pl-7 pr-3 py-2 text-sm text-[var(--text)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] ${
+                      priceValid ? "border-[var(--border)]" : "border-red-500"
+                    }`}
+                  />
+                </div>
+                {!priceValid && (
+                  <p className="text-[11px] text-red-500 mt-1">Minimum price is $1.00 (or free at $0)</p>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="mb-4">
@@ -635,26 +671,28 @@ export function UploadForm({
             />
           </div>
 
-          {/* Layout-specific fields */}
-          {itemType === "layout" && (
+          {/* Layout/Splash-specific fields */}
+          {(itemType === "layout" || itemType === "splash") && (
             <div className="border-t border-[var(--border)] pt-6 mb-6">
               <h3 className="font-heading text-sm font-bold uppercase text-[var(--text)] mb-4">
-                Layout Details
+                {itemType === "splash" ? "Splash Details" : "Layout Details"}
               </h3>
 
-              <div className="mb-4">
-                <label className="block text-xs text-[var(--text-muted)] mb-1">ECU Type</label>
-                <select
-                  value={ecuType}
-                  onChange={(e) => setEcuType(e.target.value)}
-                  className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-card px-3 py-2 text-sm text-[var(--text)] focus:outline-none focus:border-[var(--accent)]"
-                >
-                  <option value="">Select ECU...</option>
-                  {ECU_TYPES.map((e) => (
-                    <option key={e} value={e}>{e}</option>
-                  ))}
-                </select>
-              </div>
+              {itemType === "layout" && (
+                <div className="mb-4">
+                  <label className="block text-xs text-[var(--text-muted)] mb-1">ECU Type</label>
+                  <select
+                    value={ecuType}
+                    onChange={(e) => setEcuType(e.target.value)}
+                    className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-card px-3 py-2 text-sm text-[var(--text)] focus:outline-none focus:border-[var(--accent)]"
+                  >
+                    <option value="">Select ECU...</option>
+                    {ECU_TYPES.map((e) => (
+                      <option key={e} value={e}>{e}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {/* Screenshot section */}
               <div className="mb-4">
@@ -699,7 +737,7 @@ export function UploadForm({
                 )}
                 {!customScreenshot && (
                   <p className="text-[11px] text-red-400 mt-1">
-                    A screenshot is required for layout listings
+                    A screenshot is required
                   </p>
                 )}
               </div>
@@ -836,7 +874,7 @@ export function UploadForm({
             </button>
             <button
               type="button"
-              disabled={!name || !priceValid || (itemType === "layout" && !customScreenshot)}
+              disabled={!name || !priceValid || ((itemType === "layout" || itemType === "splash") && !customScreenshot)}
               onClick={() => setStep(3)}
               className="bg-[var(--accent)] text-white font-bold px-6 py-2.5 rounded-card text-sm uppercase tracking-wide hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
@@ -859,7 +897,7 @@ export function UploadForm({
           <div className="max-w-sm mx-auto mb-8">
             <div className="bg-[var(--surface)] border border-[var(--border)] rounded-card overflow-hidden">
               <div className={`${itemType === "dbc" ? "aspect-[3/1]" : "aspect-[16/9]"} bg-[#0a0a0c] relative overflow-hidden`}>
-                {previewScreenshotUrl && itemType === "layout" ? (
+                {previewScreenshotUrl && (itemType === "layout" || itemType === "splash") ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={previewScreenshotUrl} alt={name} className="w-full h-full object-contain" />
                 ) : itemType === "dbc" ? (
@@ -872,8 +910,12 @@ export function UploadForm({
                   </div>
                 )}
                 <div className="absolute top-2 left-2 flex gap-1">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${itemType === "dbc" ? "bg-blue-500 text-white" : "bg-gray-700 text-white"}`}>
-                    {itemType === "dbc" ? "DBC" : "LAYOUT"}
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                    itemType === "dbc" ? "bg-blue-500 text-white"
+                    : itemType === "splash" ? "bg-purple-600 text-white"
+                    : "bg-gray-700 text-white"
+                  }`}>
+                    {itemType === "dbc" ? "DBC" : itemType === "splash" ? "SPLASH" : "LAYOUT"}
                   </span>
                 </div>
                 {priceNum === 0 ? (
@@ -909,7 +951,7 @@ export function UploadForm({
               Listing Summary
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
-              <SummaryRow label="Type" value={itemType === "layout" ? "Dashboard Layout" : "DBC File"} />
+              <SummaryRow label="Type" value={itemType === "layout" ? "Dashboard Layout" : itemType === "splash" ? "Splash Screen" : "DBC File"} />
               <SummaryRow label="File" value={file?.name || "—"} />
               <SummaryRow label="File Size" value={file ? `${(file.size / 1024).toFixed(1)} KB` : "—"} />
               <SummaryRow label="Name" value={name} />

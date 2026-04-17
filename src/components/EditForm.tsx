@@ -31,6 +31,7 @@ export function EditForm({
   const fileRef = useRef<HTMLInputElement>(null);
 
   const isDbc = layout.item_type === "dbc";
+  const isSplash = layout.item_type === "splash";
 
   const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -74,7 +75,7 @@ export function EditForm({
       const updates: Record<string, unknown> = {
         name: name.trim(),
         description: description.trim() || null,
-        price: isNaN(parsedPrice) || parsedPrice < 0 ? 0 : parsedPrice,
+        price: isSplash ? 0 : (isNaN(parsedPrice) || parsedPrice < 0 ? 0 : parsedPrice),
         tags: tagArray,
         ecu_type: ecuType || null,
         screenshot_url: screenshotUrl,
@@ -103,7 +104,7 @@ export function EditForm({
     <div className="bg-[var(--surface)] border border-[var(--border)] rounded-card p-6 mb-4">
       <div className="flex items-center justify-between mb-5">
         <h2 className="font-heading text-lg font-bold uppercase">
-          Edit {isDbc ? "DBC File" : "Layout"}
+          Edit {isDbc ? "DBC File" : isSplash ? "Splash Screen" : "Layout"}
         </h2>
         <button
           onClick={onCancel}
@@ -119,8 +120,8 @@ export function EditForm({
         </div>
       )}
 
-      {/* New version upload (#27) — only for .rdm layouts, not DBC files */}
-      {!isDbc && (
+      {/* New version upload (#27) — only for layouts (not DBC or splash) */}
+      {!isDbc && !isSplash && (
         <div className="mb-5">
           <UploadNewVersion
             layoutId={layout.id}
@@ -165,17 +166,23 @@ export function EditForm({
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
           <label className="block text-xs font-medium text-[var(--text-muted)] mb-1 uppercase tracking-wide">
-            Price (AUD)
+            Price {isSplash ? "" : "(AUD)"}
           </label>
-          <input
-            type="number"
-            step="0.01"
-            min="0"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            className={inputClass}
-            placeholder="0.00 for free"
-          />
+          {isSplash ? (
+            <div className="bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text-muted)]">
+              Free (always)
+            </div>
+          ) : (
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              className={inputClass}
+              placeholder="0.00 for free"
+            />
+          )}
         </div>
         <div>
           <label className="block text-xs font-medium text-[var(--text-muted)] mb-1 uppercase tracking-wide">
@@ -192,7 +199,7 @@ export function EditForm({
       </div>
 
       {/* ECU Type (layout only) */}
-      {!isDbc && (
+      {!isDbc && !isSplash && (
         <div className="mb-4">
           <label className="block text-xs font-medium text-[var(--text-muted)] mb-1 uppercase tracking-wide">
             ECU Type

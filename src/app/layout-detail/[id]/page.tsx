@@ -49,6 +49,7 @@ export default async function LayoutDetailPage({ params }: { params: Promise<{ i
   ]);
   const sizeKB = (layout.file_size_bytes / 1024).toFixed(1);
   const isDbc = layout.item_type === "dbc";
+  const isSplash = layout.item_type === "splash";
   const uploadDate = new Date(layout.created_at).toLocaleDateString("en-AU", {
     day: "numeric", month: "short", year: "numeric",
   });
@@ -65,7 +66,7 @@ export default async function LayoutDetailPage({ params }: { params: Promise<{ i
         <Link href="/" className="hover:text-[var(--accent)] transition-colors">Home</Link>
         <span>/</span>
         <Link href={`/browse?type=${layout.item_type}`} className="hover:text-[var(--accent)] transition-colors">
-          {isDbc ? "DBC Files" : "Layouts"}
+          {isDbc ? "DBC Files" : isSplash ? "Splash Screens" : "Layouts"}
         </Link>
         <span>/</span>
         <span className="text-[var(--text)]">{layout.name}</span>
@@ -90,8 +91,8 @@ export default async function LayoutDetailPage({ params }: { params: Promise<{ i
         {/* Main Info */}
         <div className="lg:col-span-2">
           <div className="flex items-center gap-3 mb-2">
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${isDbc ? "bg-blue-500 text-white" : "bg-gray-700 text-white"}`}>
-              {isDbc ? "DBC" : "LAYOUT"}
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${isDbc ? "bg-blue-500 text-white" : isSplash ? "bg-purple-600 text-white" : "bg-gray-700 text-white"}`}>
+              {isDbc ? "DBC" : isSplash ? "SPLASH" : "LAYOUT"}
             </span>
             {layout.ecu_type && (
               <span className="text-xs font-medium bg-[var(--bg)] border border-[var(--border)] px-2 py-0.5 rounded text-[var(--text-muted)]">{layout.ecu_type}</span>
@@ -155,7 +156,7 @@ export default async function LayoutDetailPage({ params }: { params: Promise<{ i
                 <span>Downloads</span>
                 <span className="font-medium text-[var(--text)]">{layout.downloads}</span>
               </div>
-              {!isDbc && (
+              {!isDbc && !isSplash && (
                 <div className="flex justify-between">
                   <span>Widgets</span>
                   <span className="font-medium text-[var(--text)]">{layout.widget_count}</span>
@@ -205,7 +206,7 @@ export default async function LayoutDetailPage({ params }: { params: Promise<{ i
         <section className="mt-16">
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-heading text-2xl font-bold uppercase">
-              Related {isDbc ? "DBC Files" : "Layouts"}
+              Related {isDbc ? "DBC Files" : isSplash ? "Splash Screens" : "Layouts"}
             </h2>
             <Link href={`/browse?type=${layout.item_type}`} className="text-sm font-medium text-[var(--accent)] hover:underline">
               View all &rarr;

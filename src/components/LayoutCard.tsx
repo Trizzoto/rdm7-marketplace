@@ -6,15 +6,23 @@ import type { Layout } from "@/lib/supabase";
 export function LayoutCard({ layout }: { layout: Layout }) {
   const authorName = layout.profiles?.display_name || "Unknown";
   const isDbc = layout.item_type === "dbc";
+  const isSplash = layout.item_type === "splash";
+  const hasScreenshot = !isDbc && layout.screenshot_url;
+  const badgeLabel = isDbc ? "DBC" : isSplash ? "SPLASH" : "LAYOUT";
+  const badgeClass = isDbc
+    ? "bg-blue-500 text-white"
+    : isSplash
+    ? "bg-purple-600 text-white"
+    : "bg-gray-700 text-white";
 
   return (
     <Link href={`/layout-detail/${layout.id}`} className="block group">
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-card overflow-hidden transition-all duration-300 ease-out hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02]">
         {/* Screenshot / DBC placeholder */}
         <div className={`${isDbc ? "aspect-[3/1]" : "aspect-[16/9]"} bg-[#0a0a0c] relative overflow-hidden`}>
-          {!isDbc && layout.screenshot_url ? (
+          {hasScreenshot ? (
             <img
-              src={layout.screenshot_url}
+              src={layout.screenshot_url!}
               alt={layout.name}
               className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 ease-out"
             />
@@ -28,8 +36,8 @@ export function LayoutCard({ layout }: { layout: Layout }) {
             </div>
           )}
           <div className="absolute top-2 left-2 flex gap-1">
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${isDbc ? "bg-blue-500 text-white" : "bg-gray-700 text-white"}`}>
-              {isDbc ? "DBC" : "LAYOUT"}
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${badgeClass}`}>
+              {badgeLabel}
             </span>
           </div>
           {layout.price === 0 ? (
@@ -50,7 +58,7 @@ export function LayoutCard({ layout }: { layout: Layout }) {
           <div className="flex items-center justify-between mt-3">
             <div className="flex items-center gap-2 text-[10px] text-[var(--text-muted)]">
               {layout.ecu_type && <span className="bg-[var(--bg)] px-1.5 py-0.5 rounded font-medium">{layout.ecu_type}</span>}
-              {!isDbc && <span>{layout.widget_count}w</span>}
+              {!isDbc && !isSplash && <span>{layout.widget_count}w</span>}
               <span>{layout.downloads} DL</span>
             </div>
             {layout.rating > 0 && (
