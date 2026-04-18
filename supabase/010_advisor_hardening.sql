@@ -1,13 +1,17 @@
 -- Migration 010 — Security + performance hardening from Supabase advisors.
--- Cleared all 24 perf warnings + 6 of 9 security warnings on 2026-04-18.
+-- Cleared all 24 perf warnings + 8 of 9 security warnings on 2026-04-18.
 -- Applied directly to production on 2026-04-18; this file is the source of
 -- truth so a fresh DB or restore reaches the same state.
 --
--- Remaining (intentionally not fixed here, need a config decision):
---   * Public Bucket Allows Listing on storage.layouts / storage.screenshots
---     -- requires deciding whether to lock down listing on public buckets
---   * Leaked Password Protection Disabled (Auth)
---     -- toggle in Auth → Providers settings (UI-only, no SQL)
+-- Final advisor state after this migration:
+--   * Performance Advisor: 0 errors, 0 warnings (was 24)
+--   * Security Advisor:    0 errors, 1 warning  (was 9)
+--
+-- The 1 remaining security warning is "Leaked Password Protection Disabled"
+-- — that's the HaveIBeenPwned-backed `password_hibp_enabled` setting which
+-- Supabase only exposes on Pro plan and above. The marketplace is on Free
+-- so the toggle is greyed out. Upgrade the plan if you want to enable it;
+-- otherwise no SQL fix is possible.
 
 -- ── 1. Pin search_path on SECURITY DEFINER functions ──────────────────────
 -- Prevents search_path injection. Splinter: "Function Search Path Mutable".
@@ -97,3 +101,22 @@ create policy "View versions (own or public)" on public.layout_versions for sele
         and (layouts.is_published = true or layouts.author_id = (select auth.uid()))
     )
   );
+
+-- ── 5. Storage: drop broad public SELECT, fix auth.role() re-eval ─────────
+-- Splinter: "Public Bucket Allows Listing". Both buckets are
+-- bucket.public = true, so direct downloads via the
+-- /storage/v1/object/public/<bucket>/<path> URL bypass RLS — they keep
+-- working without any SELECT policy. The marketplace never calls
+-- storage.list() or storage.download() (file URLs come from
+-- .getPublicUrl() and are stored in layouts.rdm_url /
+-- layouts.screenshot_url). Removing this policy blocks anonymous bucket
+-- enumeration via the LIST endpoint without affecting any download flow.
+drop policy if exists "Anyone can read layouts" on storage.objects;
+drop policy if exists "Anyone can read screenshots" on storage.objects;
+
+-- Same auth.role() re-eval fix for the upload INSERT policies.
+alter policy "Authenticated users can upload layouts" on storage.objects
+  with check ((bucket_id = 'layouts'::text) and ((select auth.role()) = 'authenticated'::text));
+
+alter policy "Authenticated users can upload screenshots" on storage.objects
+  with check ((bucket_id = 'screenshots'::text) and ((select auth.role()) = 'authenticated'::text));
