@@ -103,9 +103,20 @@ export function UploadNewVersion({ layoutId, layoutName, currentVersion, authorI
     setBusy(true);
     setError(null);
     try {
+      /* Session-freshness check — same rationale as UploadForm.tsx: the
+       * `authorId` prop was captured on page load, so if the JWT has
+       * since expired every Supabase call silently drops to anon and
+       * storage/RLS rejects the write. Refreshing here turns the opaque
+       * RLS error into a clear "please sign in" message. */
+      const { data: authData, error: authErr } = await supabase.auth.getUser();
+      if (authErr || !authData.user) {
+        throw new Error("Your session expired — please sign in again and retry.");
+      }
+      const uid = authData.user.id;
+
       const newVersion = currentVersion + 1;
       const safeName = layoutName.replace(/[^a-zA-Z0-9_-]/g, "_");
-      const storagePath = `${authorId}/${layoutId}/v${newVersion}-${Date.now()}-${safeName}.rdm`;
+      const storagePath = `${uid}/${layoutId}/v${newVersion}-${Date.now()}-${safeName}.rdm`;
 
       // Upload to the layouts bucket
       const { error: upErr } = await supabase.storage

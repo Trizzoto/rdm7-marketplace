@@ -325,13 +325,27 @@ export function UploadForm({
     setUploading(true);
 
     try {
+      /* Re-verify the session right before the insert. `userId` was
+       * captured on page load — if the JWT has since expired (default
+       * 1h) the insert hits RLS with a NULL auth.uid(), which fails the
+       * "author_id = auth.uid()" policy and surfaces as the classic
+       * "new row violates row-level security policy" error. Refreshing
+       * here turns "upload fails silently after a coffee break" into
+       * either a successful upload (session still valid, just stale in
+       * memory) or a clear "please sign in again" message. */
+      const { data: authData, error: authErr } = await supabase.auth.getUser();
+      if (authErr || !authData.user) {
+        throw new Error("Your session expired — please sign in again and retry.");
+      }
+      const authorId = authData.user.id;
+
       const timestamp = Date.now();
 
       // 1. Upload screenshot
       let screenshotUrl = "";
       if (customScreenshot) {
         const ext = customScreenshot.name.split(".").pop() || "png";
-        const path = `${userId}/${timestamp}.${ext}`;
+        const path = `${authorId}/${timestamp}.${ext}`;
         const { error: upErr } = await supabase.storage
           .from("screenshots")
           .upload(path, customScreenshot, { contentType: customScreenshot.type, upsert: true });
@@ -342,7 +356,7 @@ export function UploadForm({
 
       // 2. Upload file
       const bucket = "layouts";
-      const filePath = `${userId}/${timestamp}_${file.name}`;
+      const filePath = `${authorId}/${timestamp}_${file.name}`;
       const { error: fileErr } = await supabase.storage
         .from(bucket)
         .upload(filePath, file, { contentType: "application/octet-stream", upsert: true });
@@ -357,7 +371,7 @@ export function UploadForm({
       const { data: inserted, error: dbErr } = await supabase
         .from("layouts")
         .insert({
-          author_id: userId,
+          author_id: authorId,
           item_type: itemType,
           name,
           description: description || null,
