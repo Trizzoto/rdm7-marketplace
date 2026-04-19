@@ -325,19 +325,39 @@ export function UploadForm({
     setUploading(true);
 
     try {
-      /* Re-verify the session right before the insert. `userId` was
-       * captured on page load — if the JWT has since expired (default
-       * 1h) the insert hits RLS with a NULL auth.uid(), which fails the
-       * "author_id = auth.uid()" policy and surfaces as the classic
-       * "new row violates row-level security policy" error. Refreshing
-       * here turns "upload fails silently after a coffee break" into
-       * either a successful upload (session still valid, just stale in
-       * memory) or a clear "please sign in again" message. */
-      const { data: authData, error: authErr } = await supabase.auth.getUser();
-      if (authErr || !authData.user) {
+      /* Force a fresh session before the insert. `getUser()` alone validates
+       * against the auth server but doesn't reliably push a new access token
+       * into the supabase client's headers — so subsequent PostgREST calls
+       * can still go out with a stale/expired JWT, hitting RLS with NULL
+       * auth.uid() and failing "author_id = auth.uid()" as the cryptic
+       * "new row violates row-level security policy" error.
+       *
+       * refreshSession() forces a token rotation and updates the in-memory
+       * client headers synchronously, so the insert below uses a fresh JWT. */
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
         throw new Error("Your session expired — please sign in again and retry.");
       }
-      const authorId = authData.user.id;
+      const { data: refreshed, error: refreshErr } = await supabase.auth.refreshSession();
+      if (refreshErr || !refreshed.session) {
+        throw new Error("Your session expired — please sign in again and retry.");
+      }
+      const authorId = refreshed.session.user.id;
+
+      /* Ensure the profile row exists. layouts.author_id has a FK to
+       * profiles(id), so an OAuth sign-in that didn't trigger profile
+       * creation would fail the insert with a foreign-key violation
+       * (which Supabase sometimes surfaces as a generic RLS error). */
+      const userMeta = refreshed.session.user.user_metadata as Record<string, unknown> | undefined;
+      const fallbackName =
+        (userMeta?.full_name as string | undefined) ||
+        (userMeta?.name as string | undefined) ||
+        refreshed.session.user.email?.split("@")[0] ||
+        "Anonymous";
+      await supabase.from("profiles").upsert(
+        { id: authorId, display_name: fallbackName },
+        { onConflict: "id", ignoreDuplicates: true }
+      );
 
       const timestamp = Date.now();
 

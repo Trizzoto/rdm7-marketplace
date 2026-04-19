@@ -52,12 +52,16 @@ export function EditForm({
     setError("");
 
     try {
-      /* Re-verify session before mutating. The page may have been open for
-       * longer than the JWT lifetime (default 1h). If it has, the update
-       * silently hits RLS with a NULL auth.uid() and fails the
-       * "author_id = auth.uid()" policy. Surface a clear message instead. */
-      const { data: authData, error: authErr } = await supabase.auth.getUser();
-      if (authErr || !authData.user) {
+      /* Force a fresh session before the update. getUser() validates against
+       * the auth server but doesn't always push a new access token into the
+       * supabase client headers — refreshSession() does, so the update below
+       * uses a fresh JWT and won't hit RLS with NULL auth.uid(). */
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        throw new Error("Your session expired — please sign in again and retry.");
+      }
+      const { error: refreshErr } = await supabase.auth.refreshSession();
+      if (refreshErr) {
         throw new Error("Your session expired — please sign in again and retry.");
       }
 
