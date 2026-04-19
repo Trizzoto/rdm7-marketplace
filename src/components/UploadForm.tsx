@@ -354,10 +354,16 @@ export function UploadForm({
         (userMeta?.name as string | undefined) ||
         refreshed.session.user.email?.split("@")[0] ||
         "Anonymous";
-      await supabase.from("profiles").upsert(
+      console.log("[upload] session token present:", !!refreshed.session.access_token, "uid:", authorId);
+
+      const { error: profErr } = await supabase.from("profiles").upsert(
         { id: authorId, display_name: fallbackName },
         { onConflict: "id", ignoreDuplicates: true }
       );
+      if (profErr) {
+        console.error("[upload] profile upsert failed", profErr);
+        throw new Error(`[step: profile] ${profErr.message || JSON.stringify(profErr)}`);
+      }
 
       const timestamp = Date.now();
 
@@ -369,7 +375,10 @@ export function UploadForm({
         const { error: upErr } = await supabase.storage
           .from("screenshots")
           .upload(path, customScreenshot, { contentType: customScreenshot.type, upsert: true });
-        if (upErr) throw new Error(upErr.message || "Screenshot upload failed");
+        if (upErr) {
+          console.error("[upload] screenshot upload failed", upErr);
+          throw new Error(`[step: screenshot] ${upErr.message || JSON.stringify(upErr)}`);
+        }
         const { data: urlData } = supabase.storage.from("screenshots").getPublicUrl(path);
         screenshotUrl = urlData.publicUrl;
       }
@@ -380,7 +389,10 @@ export function UploadForm({
       const { error: fileErr } = await supabase.storage
         .from(bucket)
         .upload(filePath, file, { contentType: "application/octet-stream", upsert: true });
-      if (fileErr) throw new Error(fileErr.message || "File upload failed");
+      if (fileErr) {
+        console.error("[upload] file upload failed", fileErr);
+        throw new Error(`[step: file] ${fileErr.message || JSON.stringify(fileErr)}`);
+      }
       const { data: fileUrlData } = supabase.storage.from(bucket).getPublicUrl(filePath);
 
       // 3. Build tags arrays
