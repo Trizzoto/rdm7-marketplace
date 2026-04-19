@@ -52,6 +52,15 @@ export function EditForm({
     setError("");
 
     try {
+      /* Re-verify session before mutating. The page may have been open for
+       * longer than the JWT lifetime (default 1h). If it has, the update
+       * silently hits RLS with a NULL auth.uid() and fails the
+       * "author_id = auth.uid()" policy. Surface a clear message instead. */
+      const { data: authData, error: authErr } = await supabase.auth.getUser();
+      if (authErr || !authData.user) {
+        throw new Error("Your session expired — please sign in again and retry.");
+      }
+
       let screenshotUrl = layout.screenshot_url;
 
       // Upload new screenshot if changed
