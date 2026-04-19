@@ -354,16 +354,19 @@ export function UploadForm({
         (userMeta?.name as string | undefined) ||
         refreshed.session.user.email?.split("@")[0] ||
         "Anonymous";
-      console.log("[upload] session token present:", !!refreshed.session.access_token, "uid:", authorId);
+      console.error("[upload] session token present:", !!refreshed.session.access_token, "uid:", authorId);
 
       /* Diagnostic: ask Postgres what auth.uid() / auth.role() it sees
        * via the user's JWT. If role !== 'authenticated' or uid is null,
        * that confirms the JWT isn't propagating to Postgres correctly. */
+      let whoamiSnapshot = "n/a";
       try {
         const { data: who, error: whoErr } = await supabase.rpc("whoami");
-        console.log("[upload] whoami:", who, whoErr);
+        console.error("[upload] whoami:", who, whoErr);
+        whoamiSnapshot = JSON.stringify(who) + (whoErr ? " err=" + JSON.stringify(whoErr) : "");
       } catch (e) {
-        console.log("[upload] whoami threw:", e);
+        console.error("[upload] whoami threw:", e);
+        whoamiSnapshot = "threw: " + (e instanceof Error ? e.message : String(e));
       }
 
       const { error: profErr } = await supabase.from("profiles").upsert(
@@ -387,7 +390,7 @@ export function UploadForm({
           .upload(path, customScreenshot, { contentType: customScreenshot.type, upsert: true });
         if (upErr) {
           console.error("[upload] screenshot upload failed", upErr);
-          throw new Error(`[step: screenshot] ${upErr.message || JSON.stringify(upErr)}`);
+          throw new Error(`[step: screenshot] ${upErr.message || JSON.stringify(upErr)} | whoami: ${whoamiSnapshot}`);
         }
         const { data: urlData } = supabase.storage.from("screenshots").getPublicUrl(path);
         screenshotUrl = urlData.publicUrl;
