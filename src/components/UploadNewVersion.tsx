@@ -144,7 +144,8 @@ export function UploadNewVersion({ layoutId, layoutName, currentVersion, authorI
           Authorization: `Bearer ${accessToken}`,
           apikey: anonKey,
           "Content-Type": "application/octet-stream",
-          "x-upsert": "true",
+          // No x-upsert — storage upsert path fails RLS even when
+          // INSERT alone passes. Path is timestamped so no collision.
         },
         body: file,
       });

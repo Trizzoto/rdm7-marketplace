@@ -396,7 +396,9 @@ export function UploadForm({
             Authorization: `Bearer ${accessToken}`,
             apikey: anonKey,
             "Content-Type": contentType,
-            "x-upsert": "true",
+            // NB: do NOT send x-upsert: storage server runs an UPSERT
+            // path that fails RLS even when INSERT alone would pass.
+            // Paths are uniquely timestamped so duplicates won't happen.
           },
           body,
         });

@@ -95,7 +95,8 @@ export function EditForm({
             Authorization: `Bearer ${accessToken}`,
             apikey: anonKey,
             "Content-Type": screenshotFile.type || "image/png",
-            "x-upsert": "true",
+            // No x-upsert — storage upsert path fails RLS even when
+            // INSERT alone passes. Path is timestamped so no collision.
           },
           body: screenshotFile,
         });
