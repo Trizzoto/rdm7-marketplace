@@ -103,23 +103,35 @@ export function UploadNewVersion({ layoutId, layoutName, currentVersion, authorI
     setBusy(true);
     setError(null);
     try {
-      /* Force a fresh session — getUser() alone validates the user but
-       * doesn't reliably push a new access token to the client headers,
-       * so subsequent storage/insert calls can still go out with a stale
-       * JWT and hit RLS with NULL auth.uid(). refreshSession() rotates
-       * the token and updates client headers synchronously. */
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
-        throw new Error("Your session expired — please sign in again and retry.");
-      }
-      const { data: refreshed, error: refreshErr } = await supabase.auth.refreshSession();
-      if (refreshErr || !refreshed.session) {
-        throw new Error("Your session expired — please sign in again and retry.");
-      }
-      const uid = refreshed.session.user.id;
-      const accessToken = refreshed.session.access_token;
+      /* See UploadForm for full explanation: must refresh via raw fetch
+       * to /auth/v1/token because supabase.auth.refreshSession() returns
+       * the cached (possibly server-revoked) token. */
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
       const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.refresh_token) {
+        throw new Error("Your session expired — please sign in again and retry.");
+      }
+      const refreshRes = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+        method: "POST",
+        headers: { "apikey": anonKey, "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: sessionData.session.refresh_token }),
+      });
+      if (!refreshRes.ok) {
+        throw new Error("Your session expired — please sign in again and retry.");
+      }
+      const refreshed = await refreshRes.json();
+      if (!refreshed.access_token || !refreshed.user?.id) {
+        throw new Error("Your session expired — please sign in again and retry.");
+      }
+      const uid = refreshed.user.id as string;
+      const accessToken = refreshed.access_token as string;
+      try {
+        await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshed.refresh_token,
+        });
+      } catch { /* best effort */ }
 
       const newVersion = currentVersion + 1;
       const safeName = layoutName.replace(/[^a-zA-Z0-9_-]/g, "_");

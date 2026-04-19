@@ -325,38 +325,56 @@ export function UploadForm({
     setUploading(true);
 
     try {
-      /* Force a fresh session before the insert. `getUser()` alone validates
-       * against the auth server but doesn't reliably push a new access token
-       * into the supabase client's headers — so subsequent PostgREST calls
-       * can still go out with a stale/expired JWT, hitting RLS with NULL
-       * auth.uid() and failing "author_id = auth.uid()" as the cryptic
-       * "new row violates row-level security policy" error.
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+      /* CRITICAL — supabase.auth.refreshSession() returns the cached
+       * access_token if it's not expired, even when storage server has
+       * already revoked it (e.g. from a prior background refresh that
+       * supabase-js didn't propagate). PostgREST still accepts the
+       * cached token (no revocation check) but storage rejects it with
+       * the cryptic "new row violates RLS policy" error.
        *
-       * refreshSession() forces a token rotation and updates the in-memory
-       * client headers synchronously, so the insert below uses a fresh JWT. */
+       * The reliable fix is to call /auth/v1/token?grant_type=refresh_token
+       * directly via raw fetch — this guarantees the auth server issues
+       * a fresh access_token that storage will accept. */
       const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
+      if (!sessionData.session?.refresh_token) {
         throw new Error("Your session expired — please sign in again and retry.");
       }
-      const { data: refreshed, error: refreshErr } = await supabase.auth.refreshSession();
-      if (refreshErr || !refreshed.session) {
+      const refreshRes = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+        method: "POST",
+        headers: { "apikey": anonKey, "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: sessionData.session.refresh_token }),
+      });
+      if (!refreshRes.ok) {
         throw new Error("Your session expired — please sign in again and retry.");
       }
-      const authorId = refreshed.session.user.id;
+      const refreshed = await refreshRes.json();
+      if (!refreshed.access_token || !refreshed.user?.id) {
+        throw new Error("Your session expired — please sign in again and retry.");
+      }
+      const accessToken = refreshed.access_token as string;
+      const authorId = refreshed.user.id as string;
+
+      /* Persist the rotated token back into supabase-js so subsequent
+       * PostgREST calls (profile upsert, layouts insert) use the new one. */
+      try {
+        await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshed.refresh_token,
+        });
+      } catch { /* best effort */ }
 
       /* Ensure the profile row exists. layouts.author_id has a FK to
        * profiles(id), so an OAuth sign-in that didn't trigger profile
-       * creation would fail the insert with a foreign-key violation
-       * (which Supabase sometimes surfaces as a generic RLS error). */
-      const userMeta = refreshed.session.user.user_metadata as Record<string, unknown> | undefined;
+       * creation would fail the insert with a foreign-key violation. */
+      const userMeta = refreshed.user.user_metadata as Record<string, unknown> | undefined;
       const fallbackName =
         (userMeta?.full_name as string | undefined) ||
         (userMeta?.name as string | undefined) ||
-        refreshed.session.user.email?.split("@")[0] ||
+        (refreshed.user.email as string | undefined)?.split("@")[0] ||
         "Anonymous";
-      const accessToken = refreshed.session.access_token;
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
       /* Raw fetch upload helper. Bypasses supabase-js storage subclient
        * which has been observed sending the wrong Authorization header

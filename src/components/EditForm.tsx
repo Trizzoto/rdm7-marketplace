@@ -52,21 +52,35 @@ export function EditForm({
     setError("");
 
     try {
-      /* Force a fresh session before the update. getUser() validates against
-       * the auth server but doesn't always push a new access token into the
-       * supabase client headers — refreshSession() does, so the update below
-       * uses a fresh JWT and won't hit RLS with NULL auth.uid(). */
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
-        throw new Error("Your session expired — please sign in again and retry.");
-      }
-      const { data: refreshed, error: refreshErr } = await supabase.auth.refreshSession();
-      if (refreshErr || !refreshed.session) {
-        throw new Error("Your session expired — please sign in again and retry.");
-      }
-      const accessToken = refreshed.session.access_token;
+      /* See UploadForm for full explanation: refreshSession() returns the
+       * cached access_token if not expired, but storage may have already
+       * revoked it. Manual refresh via /auth/v1/token guarantees a fresh
+       * token that storage will accept. */
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
       const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session?.refresh_token) {
+        throw new Error("Your session expired — please sign in again and retry.");
+      }
+      const refreshRes = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+        method: "POST",
+        headers: { "apikey": anonKey, "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: sessionData.session.refresh_token }),
+      });
+      if (!refreshRes.ok) {
+        throw new Error("Your session expired — please sign in again and retry.");
+      }
+      const refreshed = await refreshRes.json();
+      if (!refreshed.access_token) {
+        throw new Error("Your session expired — please sign in again and retry.");
+      }
+      const accessToken = refreshed.access_token as string;
+      try {
+        await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshed.refresh_token,
+        });
+      } catch { /* best effort */ }
 
       let screenshotUrl = layout.screenshot_url;
 
