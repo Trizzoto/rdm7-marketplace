@@ -60,23 +60,36 @@ export function EditForm({
       if (!sessionData.session) {
         throw new Error("Your session expired — please sign in again and retry.");
       }
-      const { error: refreshErr } = await supabase.auth.refreshSession();
-      if (refreshErr) {
+      const { data: refreshed, error: refreshErr } = await supabase.auth.refreshSession();
+      if (refreshErr || !refreshed.session) {
         throw new Error("Your session expired — please sign in again and retry.");
       }
+      const accessToken = refreshed.session.access_token;
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
       let screenshotUrl = layout.screenshot_url;
 
-      // Upload new screenshot if changed
+      // Upload new screenshot if changed (raw fetch — supabase-js storage
+      // client sends wrong Authorization header, hits RLS as anon)
       if (screenshotFile) {
         const ext = screenshotFile.name.split(".").pop() || "png";
         const path = `${layout.author_id}/${layout.id}_${Date.now()}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("screenshots")
-          .upload(path, screenshotFile, { contentType: screenshotFile.type, upsert: true });
-        if (upErr) throw upErr;
-        const { data: urlData } = supabase.storage.from("screenshots").getPublicUrl(path);
-        screenshotUrl = urlData.publicUrl;
+        const res = await fetch(`${supabaseUrl}/storage/v1/object/screenshots/${path}`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            apikey: anonKey,
+            "Content-Type": screenshotFile.type || "image/png",
+            "x-upsert": "true",
+          },
+          body: screenshotFile,
+        });
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(`Screenshot upload failed: ${txt || `HTTP ${res.status}`}`);
+        }
+        screenshotUrl = `${supabaseUrl}/storage/v1/object/public/screenshots/${path}`;
       }
 
       const parsedPrice = parseFloat(price);

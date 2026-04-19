@@ -117,19 +117,31 @@ export function UploadNewVersion({ layoutId, layoutName, currentVersion, authorI
         throw new Error("Your session expired — please sign in again and retry.");
       }
       const uid = refreshed.session.user.id;
+      const accessToken = refreshed.session.access_token;
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
       const newVersion = currentVersion + 1;
       const safeName = layoutName.replace(/[^a-zA-Z0-9_-]/g, "_");
       const storagePath = `${uid}/${layoutId}/v${newVersion}-${Date.now()}-${safeName}.rdm`;
 
-      // Upload to the layouts bucket
-      const { error: upErr } = await supabase.storage
-        .from("layouts")
-        .upload(storagePath, file, { contentType: "application/octet-stream", upsert: false });
-      if (upErr) throw upErr;
+      // Raw fetch upload — supabase-js storage client sends wrong auth header
+      const res = await fetch(`${supabaseUrl}/storage/v1/object/layouts/${storagePath}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          apikey: anonKey,
+          "Content-Type": "application/octet-stream",
+          "x-upsert": "true",
+        },
+        body: file,
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`Upload failed: ${txt || `HTTP ${res.status}`}`);
+      }
 
-      const { data: urlData } = supabase.storage.from("layouts").getPublicUrl(storagePath);
-      const rdmUrl = urlData.publicUrl;
+      const rdmUrl = `${supabaseUrl}/storage/v1/object/public/layouts/${storagePath}`;
 
       // Insert version row — trigger handles notifications + updating the main layouts row
       const { error: insErr } = await supabase.from("layout_versions").insert({

@@ -354,20 +354,42 @@ export function UploadForm({
         (userMeta?.name as string | undefined) ||
         refreshed.session.user.email?.split("@")[0] ||
         "Anonymous";
-      console.error("[upload] session token present:", !!refreshed.session.access_token, "uid:", authorId);
+      const accessToken = refreshed.session.access_token;
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-      /* Diagnostic: ask Postgres what auth.uid() / auth.role() it sees
-       * via the user's JWT. If role !== 'authenticated' or uid is null,
-       * that confirms the JWT isn't propagating to Postgres correctly. */
-      let whoamiSnapshot = "n/a";
-      try {
-        const { data: who, error: whoErr } = await supabase.rpc("whoami");
-        console.error("[upload] whoami:", who, whoErr);
-        whoamiSnapshot = JSON.stringify(who) + (whoErr ? " err=" + JSON.stringify(whoErr) : "");
-      } catch (e) {
-        console.error("[upload] whoami threw:", e);
-        whoamiSnapshot = "threw: " + (e instanceof Error ? e.message : String(e));
-      }
+      /* Raw fetch upload helper. Bypasses supabase-js storage subclient
+       * which has been observed sending the wrong Authorization header
+       * (anon key instead of user access_token), causing storage RLS to
+       * reject the request as anonymous even though the user is signed in.
+       * Using the user's freshly-refreshed access_token directly via fetch
+       * is the only reliable way to get the JWT to propagate correctly to
+       * the storage server's RLS evaluation. */
+      const uploadToStorage = async (
+        bucket: string,
+        objectPath: string,
+        body: File | Blob,
+        contentType: string,
+      ): Promise<{ error: { message: string } | null }> => {
+        const url = `${supabaseUrl}/storage/v1/object/${bucket}/${objectPath}`;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            apikey: anonKey,
+            "Content-Type": contentType,
+            "x-upsert": "true",
+          },
+          body,
+        });
+        if (!res.ok) {
+          const txt = await res.text();
+          let parsed: { message?: string } = {};
+          try { parsed = JSON.parse(txt); } catch {}
+          return { error: { message: parsed.message || txt || `HTTP ${res.status}` } };
+        }
+        return { error: null };
+      };
 
       const { error: profErr } = await supabase.from("profiles").upsert(
         { id: authorId, display_name: fallbackName },
@@ -385,28 +407,33 @@ export function UploadForm({
       if (customScreenshot) {
         const ext = customScreenshot.name.split(".").pop() || "png";
         const path = `${authorId}/${timestamp}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("screenshots")
-          .upload(path, customScreenshot, { contentType: customScreenshot.type, upsert: true });
+        const { error: upErr } = await uploadToStorage(
+          "screenshots",
+          path,
+          customScreenshot,
+          customScreenshot.type || "image/png",
+        );
         if (upErr) {
           console.error("[upload] screenshot upload failed", upErr);
-          throw new Error(`[step: screenshot] ${upErr.message || JSON.stringify(upErr)} | whoami: ${whoamiSnapshot}`);
+          throw new Error(`[step: screenshot] ${upErr.message}`);
         }
-        const { data: urlData } = supabase.storage.from("screenshots").getPublicUrl(path);
-        screenshotUrl = urlData.publicUrl;
+        screenshotUrl = `${supabaseUrl}/storage/v1/object/public/screenshots/${path}`;
       }
 
       // 2. Upload file
       const bucket = "layouts";
       const filePath = `${authorId}/${timestamp}_${file.name}`;
-      const { error: fileErr } = await supabase.storage
-        .from(bucket)
-        .upload(filePath, file, { contentType: "application/octet-stream", upsert: true });
+      const { error: fileErr } = await uploadToStorage(
+        bucket,
+        filePath,
+        file,
+        "application/octet-stream",
+      );
       if (fileErr) {
         console.error("[upload] file upload failed", fileErr);
-        throw new Error(`[step: file] ${fileErr.message || JSON.stringify(fileErr)}`);
+        throw new Error(`[step: file] ${fileErr.message}`);
       }
-      const { data: fileUrlData } = supabase.storage.from(bucket).getPublicUrl(filePath);
+      const fileUrl = `${supabaseUrl}/storage/v1/object/public/${bucket}/${filePath}`;
 
       // 3. Build tags arrays
       const tagList = tags ? tags.split(",").map((t) => t.trim()).filter(Boolean) : [];
@@ -423,7 +450,7 @@ export function UploadForm({
           ecu_type: ecuType || null,
           tags: tagList,
           screenshot_url: screenshotUrl || null,
-          rdm_url: fileUrlData.publicUrl,
+          rdm_url: fileUrl,
           file_size_bytes: file.size,
           widget_count: parsedRdm?.widgetCount || 0,
           signal_count: parsedRdm?.signalCount || 0,
@@ -446,7 +473,7 @@ export function UploadForm({
         await supabase.from("layout_versions").insert({
           layout_id: inserted.id,
           version: 1,
-          rdm_url: fileUrlData.publicUrl,
+          rdm_url: fileUrl,
           file_size_bytes: file.size,
           widget_count: parsedRdm?.widgetCount || 0,
           signal_count: parsedRdm?.signalCount || 0,
