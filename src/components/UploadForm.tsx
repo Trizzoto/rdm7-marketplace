@@ -356,6 +356,16 @@ export function UploadForm({
         "Anonymous";
       console.log("[upload] session token present:", !!refreshed.session.access_token, "uid:", authorId);
 
+      /* Diagnostic: ask Postgres what auth.uid() / auth.role() it sees
+       * via the user's JWT. If role !== 'authenticated' or uid is null,
+       * that confirms the JWT isn't propagating to Postgres correctly. */
+      try {
+        const { data: who, error: whoErr } = await supabase.rpc("whoami");
+        console.log("[upload] whoami:", who, whoErr);
+      } catch (e) {
+        console.log("[upload] whoami threw:", e);
+      }
+
       const { error: profErr } = await supabase.from("profiles").upsert(
         { id: authorId, display_name: fallbackName },
         { onConflict: "id", ignoreDuplicates: true }
