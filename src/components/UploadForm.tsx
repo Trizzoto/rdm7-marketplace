@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { showToast } from "@/components/Toast";
+import { validateLayout } from "@/lib/widget-schema";
 
 const ECU_TYPES = ["MaxxECU", "Haltech", "Link", "AEM", "MoTeC", "Ecumaster", "Custom"];
 const CAN_SPEEDS = ["500 kbps", "1 Mbps", "Other"];
@@ -130,6 +131,15 @@ export function UploadForm({
   const [file, setFile] = useState<File | null>(null);
   const [parsedRdm, setParsedRdm] = useState<ParsedRdm | null>(null);
   const [parsedDbc, setParsedDbc] = useState<ParsedDbc | null>(null);
+  /**
+   * Layout schema validation errors. Populated by `validateLayout` after
+   * the inner JSON is parsed. Empty array = clean layout. Non-empty blocks
+   * Step 1→2 advance for itemType="layout" uploads.
+   *
+   * Splash and DBC uploads bypass this — different file format, schema
+   * doesn't apply.
+   */
+  const [layoutValidationErrors, setLayoutValidationErrors] = useState<string[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -155,7 +165,8 @@ export function UploadForm({
   /*  RDM parsing                                                      */
   /* ---------------------------------------------------------------- */
 
-  const parseRdmFile = useCallback(async (f: File) => {
+  const parseRdmFile = useCallback(async (f: File, isLayout: boolean) => {
+    setLayoutValidationErrors([]);
     try {
       const buf = await f.arrayBuffer();
       const view = new DataView(buf);
@@ -170,6 +181,17 @@ export function UploadForm({
         if (type === 0) {
           const json = new TextDecoder().decode(new Uint8Array(buf, offset, dataLen));
           const parsed = JSON.parse(json);
+
+          // Schema validation — only for layout uploads. Splash files use
+          // the same .rdm container but the inner JSON is splash metadata,
+          // not a widget layout, so skip the widget-schema check.
+          if (isLayout) {
+            const v = validateLayout(parsed);
+            if (!v.ok) {
+              setLayoutValidationErrors(v.errors);
+            }
+          }
+
           // Detect night-mode capability: any widget with a non-empty `night`
           // block, OR a layout-level `night_mode` trigger binding.
           const hasNight =
@@ -261,11 +283,14 @@ export function UploadForm({
       setError("");
       if (itemType === "dbc") {
         setParsedRdm(null);
+        setLayoutValidationErrors([]);
         parseDbcFile(f);
       } else {
-        // layout or splash — both use .rdm files
+        // layout or splash — both use .rdm files. Only the layout flavour
+        // is validated against the widget schema; splash JSON is a
+        // different shape.
         setParsedDbc(null);
-        parseRdmFile(f);
+        parseRdmFile(f, itemType === "layout");
       }
     },
     [itemType, parseRdmFile, parseDbcFile]
@@ -710,11 +735,40 @@ export function UploadForm({
             )}
           </div>
 
+          {/* Layout validation errors — block advance until resolved. */}
+          {layoutValidationErrors.length > 0 && (
+            <div
+              className="mt-4 p-4 border border-red-500/40 bg-red-500/10 rounded-card text-sm"
+              role="alert"
+            >
+              <div className="flex items-center gap-2 mb-2 font-bold text-red-500 uppercase tracking-wide text-xs">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Layout Validation Failed
+              </div>
+              <p className="text-[12px] text-[var(--text-muted)] mb-2">
+                This .rdm file doesn&apos;t match the firmware widget schema. The
+                listing can&apos;t be created until the issues below are fixed.
+              </p>
+              <ul className="text-[12px] list-disc list-inside space-y-0.5 max-h-40 overflow-y-auto">
+                {layoutValidationErrors.slice(0, 12).map((err, i) => (
+                  <li key={i}>{err}</li>
+                ))}
+                {layoutValidationErrors.length > 12 && (
+                  <li className="italic text-[var(--text-muted)]">
+                    …and {layoutValidationErrors.length - 12} more
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
+
           {/* Next button */}
           <div className="flex justify-end mt-6">
             <button
               type="button"
-              disabled={!file}
+              disabled={!file || layoutValidationErrors.length > 0}
               onClick={() => setStep(2)}
               className="bg-[var(--accent)] text-white font-bold px-6 py-2.5 rounded-card text-sm uppercase tracking-wide hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
