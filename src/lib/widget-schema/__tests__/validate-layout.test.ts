@@ -449,7 +449,7 @@ describe("validateLayoutString", () => {
 /* ------------------------------------------------------------------ */
 
 describe("knownWidgetTypes", () => {
-  it("returns all 13 widget types from the schema", () => {
+  it("returns all 15 widget types from the schema", () => {
     const types = knownWidgetTypes();
     expect(types).toContain("panel");
     expect(types).toContain("rpm_bar");
@@ -460,10 +460,12 @@ describe("knownWidgetTypes", () => {
     expect(types).toContain("meter");
     expect(types).toContain("image");
     expect(types).toContain("shape_panel");
+    expect(types).toContain("line");
+    expect(types).toContain("banner");
     expect(types).toContain("arc");
     expect(types).toContain("toggle");
     expect(types).toContain("button");
     expect(types).toContain("shift_light");
-    expect(types.length).toBe(13);
+    expect(types.length).toBe(15);
   });
 });

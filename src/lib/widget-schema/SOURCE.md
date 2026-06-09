@@ -5,8 +5,8 @@ firmware repo (`RDM-7_Dash`).
 
 | Source repo | `RDM-7_Dash` |
 | Source path | `schema/widgets.schema.json`, `schema/widgets.schema.meta.json` |
-| Source commit | **`b44e9d3220341e210dba633cd20f03c3bbc6462b`** (file commit; HEAD at vendor time `95ae13cb26c5f3d255e913ec7808cfeb9cfa1ec1`, branch `feature/widget-sys`) |
-| Vendored on | 2026-04-27 |
+| Source commit | **working-tree** of `feature/widget-sys` (HEAD `94773d35ca30a30cc1e3e3258369f1e94edd30f2`; `schema/widgets.schema.json` had uncommitted edits at vendor time — adds `line` + `banner` widgets, expanded arc/bar/rpm/meter fields for schema v14) |
+| Vendored on | 2026-06-10 |
 
 ## Updating
 
