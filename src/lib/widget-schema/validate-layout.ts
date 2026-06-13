@@ -77,14 +77,15 @@ export const MIN_SUPPORTED_LAYOUT_SCHEMA_VERSION = 1;
  * across `widget_*.c`. Widgets without an entry are slot-less or have
  * no enforced cap (image, text, etc.).
  *
- * Source: CLAUDE.md "Slot-limited: panel(16), bar(2), indicator(2), warning(8)"
- * and direct reads of `widget_panel.c` (`slot < 8`), `widget_warning.c`
- * (`slot >= 8`), etc. The widget_meter / widget_rpm_bar slots are
- * single-instance (singleton in schema).
+ * Source: firmware `SLOT_LIMITS = { panel: 0, bar: 0, indicator: 2, warning: 8 }`
+ * (main/web/index.html) where 0 means *unlimited*, plus direct reads of
+ * `widget_panel.c` — slots 0..7 auto-position, slot 8+ is a "skip
+ * auto-positioning / manually placed" sentinel that MANY panels legitimately
+ * share. So `panel` and `bar` are uncapped and NOT slot-unique; only
+ * `indicator` and `warning` are slot-capped. The widget_meter / widget_rpm_bar
+ * slots are single-instance (singleton in schema).
  */
 const SLOT_CAPS: Record<string, number> = {
-  panel: 16,
-  bar: 2,
   indicator: 2,
   warning: 8,
 };

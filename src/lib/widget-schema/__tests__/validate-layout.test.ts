@@ -360,57 +360,72 @@ describe("validateLayout — select options", () => {
 /* ------------------------------------------------------------------ */
 
 describe("validateLayout — slot bounds", () => {
-  it("rejects a panel with slot >= 16", () => {
+  it("rejects an indicator with slot >= 2", () => {
     const r = validateLayout({
       schema_version: 13,
       widgets: [
         {
-          type: "panel",
-          id: "p0",
+          type: "indicator",
+          id: "i0",
           x: 0,
           y: 0,
-          w: 155,
-          h: 92,
-          config: { slot: 16 },
+          w: 60,
+          h: 60,
+          config: { slot: 2 },
         },
       ],
     });
     expect(r.ok).toBe(false);
     if (!r.ok) {
-      expect(r.errors.some((e) => /slot=16 out of range/.test(e))).toBe(true);
+      expect(r.errors.some((e) => /slot=2 out of range/.test(e))).toBe(true);
     }
   });
 
-  it("rejects a bar with slot >= 2", () => {
+  it("rejects a warning with slot >= 8", () => {
     const r = validateLayout({
       schema_version: 13,
       widgets: [
         {
-          type: "bar",
-          id: "b0",
+          type: "warning",
+          id: "wn0",
           x: 0,
           y: 0,
-          w: 300,
-          h: 30,
-          config: { slot: 5 },
+          w: 120,
+          h: 60,
+          config: { slot: 8 },
         },
       ],
     });
     expect(r.ok).toBe(false);
   });
 
-  it("rejects duplicate slots within a single widget type", () => {
+  it("rejects duplicate slots within a slot-capped widget type", () => {
     const r = validateLayout({
       schema_version: 13,
       widgets: [
-        { type: "bar", id: "b0", x: 0, y: 0, w: 300, h: 30, config: { slot: 0 } },
-        { type: "bar", id: "b1", x: 0, y: 0, w: 300, h: 30, config: { slot: 0 } },
+        { type: "indicator", id: "i0", x: 0, y: 0, w: 60, h: 60, config: { slot: 0 } },
+        { type: "indicator", id: "i1", x: 0, y: 0, w: 60, h: 60, config: { slot: 0 } },
       ],
     });
     expect(r.ok).toBe(false);
     if (!r.ok) {
       expect(r.errors.some((e) => /duplicate slot/.test(e))).toBe(true);
     }
+  });
+
+  it("allows many panels sharing slot 8 (manual-position sentinel)", () => {
+    // Firmware: panel slots 0..7 auto-position, slot 8+ is a shared
+    // "skip auto-positioning" marker — duplicates are normal, not an error.
+    const r = validateLayout({
+      schema_version: 14,
+      widgets: [
+        { type: "panel", id: "p0", x: 0, y: 0, w: 155, h: 92, config: { slot: 8 } },
+        { type: "panel", id: "p1", x: 0, y: 0, w: 155, h: 92, config: { slot: 8 } },
+        { type: "panel", id: "p2", x: 0, y: 0, w: 155, h: 92, config: { slot: 8 } },
+        { type: "panel", id: "p3", x: 0, y: 0, w: 155, h: 92, config: { slot: 16 } },
+      ],
+    });
+    expect(r.ok).toBe(true);
   });
 
   it("does NOT flag slot collisions across different widget types", () => {

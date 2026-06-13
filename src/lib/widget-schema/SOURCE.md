@@ -5,8 +5,8 @@ firmware repo (`RDM-7_Dash`).
 
 | Source repo | `RDM-7_Dash` |
 | Source path | `schema/widgets.schema.json`, `schema/widgets.schema.meta.json` |
-| Source commit | **working-tree** of `feature/widget-sys` (HEAD `94773d35ca30a30cc1e3e3258369f1e94edd30f2`; `schema/widgets.schema.json` had uncommitted edits at vendor time — adds `line` + `banner` widgets, expanded arc/bar/rpm/meter fields for schema v14) |
-| Vendored on | 2026-06-10 |
+| Source commit | **working-tree** of `feature/widget-sys` (HEAD `85aad313c982d85db3bfd600ba5d10cc5afd18eb`; `schema/widgets.schema.json` had an uncommitted in-progress edit at vendor time — adds panel `unit_size`. Re-vendor adds panel `text_align`/`show_unit`/`unit_size`, meter `needle_inner_radius`/`bake_into_gauge`, arc `tick_min`/`tick_max`/`mid_tick_*`/`ticks_on_top`/`signal_min`/`signal_max`/`redline_*`, still schema v14) |
+| Vendored on | 2026-06-13 |
 
 ## Updating
 
