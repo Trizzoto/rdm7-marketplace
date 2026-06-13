@@ -5,8 +5,6 @@ import { supabase } from "@/lib/supabase";
 import type { Layout } from "@/lib/supabase";
 import { UploadNewVersion } from "./UploadNewVersion";
 
-const ECU_TYPES = ["MaxxECU", "Haltech", "Link", "AEM", "MoTeC", "Ecumaster", "Custom"];
-
 const inputClass =
   "w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text)] focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] transition-colors";
 
@@ -23,7 +21,6 @@ export function EditForm({
   const [description, setDescription] = useState(layout.description || "");
   const [price, setPrice] = useState(layout.price.toString());
   const [tags, setTags] = useState((layout.tags || []).join(", "));
-  const [ecuType, setEcuType] = useState(layout.ecu_type || "");
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -118,7 +115,6 @@ export function EditForm({
         description: description.trim() || null,
         price: isSplash ? 0 : (isNaN(parsedPrice) || parsedPrice < 0 ? 0 : parsedPrice),
         tags: tagArray,
-        ecu_type: ecuType || null,
         screenshot_url: screenshotUrl,
       };
 
@@ -238,25 +234,6 @@ export function EditForm({
           />
         </div>
       </div>
-
-      {/* ECU Type (layout only) */}
-      {!isDbc && !isSplash && (
-        <div className="mb-4">
-          <label className="block text-xs font-medium text-[var(--text-muted)] mb-1 uppercase tracking-wide">
-            ECU Type
-          </label>
-          <select
-            value={ecuType}
-            onChange={(e) => setEcuType(e.target.value)}
-            className={inputClass}
-          >
-            <option value="">Select ECU...</option>
-            {ECU_TYPES.map((e) => (
-              <option key={e} value={e}>{e}</option>
-            ))}
-          </select>
-        </div>
-      )}
 
       {/* Screenshot */}
       {!isDbc && (

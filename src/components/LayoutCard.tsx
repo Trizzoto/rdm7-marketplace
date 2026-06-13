@@ -65,9 +65,7 @@ export function LayoutCard({ layout }: { layout: Layout }) {
           <p className="text-xs text-[var(--text-muted)] mt-1">by {authorName}</p>
           <div className="flex items-center justify-between mt-3">
             <div className="flex items-center gap-2 text-[10px] text-[var(--text-muted)]">
-              {layout.ecu_type && <span className="bg-[var(--bg)] px-1.5 py-0.5 rounded font-medium">{layout.ecu_type}</span>}
               {!isDbc && !isSplash && <span>{layout.widget_count}w</span>}
-              <span>{layout.downloads} DL</span>
             </div>
             {layout.rating > 0 && (
               <div className="flex items-center gap-1 text-[10px]">

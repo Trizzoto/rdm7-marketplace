@@ -14,8 +14,6 @@ const SORT_OPTIONS = [
   { value: "name", label: "Name A-Z" },
 ];
 
-const ECU_TYPES = ["All", "MaxxECU", "Haltech", "Link", "AEM", "MoTeC", "Ecumaster", "Custom"];
-
 export default function SearchPage() {
   return (
     <Suspense fallback={<div className="text-center py-20 text-[var(--text-muted)]">Loading...</div>}>
@@ -34,7 +32,6 @@ function SearchContent() {
   const [hasSearched, setHasSearched] = useState(false);
   const [itemType, setItemType] = useState<string>("all");
   const [price, setPrice] = useState<string>("all");
-  const [ecu, setEcu] = useState<string>("All");
   const [sort, setSort] = useState<string>("recent");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -58,7 +55,6 @@ function SearchContent() {
       if (itemType !== "all") q = q.eq("item_type", itemType);
       if (price === "free") q = q.eq("price", 0);
       if (price === "paid") q = q.gt("price", 0);
-      if (ecu !== "All") q = q.eq("ecu_type", ecu);
 
       switch (sort) {
         case "downloads":
@@ -78,7 +74,7 @@ function SearchContent() {
       setLayouts((data as Layout[]) || []);
       setLoading(false);
     },
-    [itemType, price, ecu, sort]
+    [itemType, price, sort]
   );
 
   // Debounced search on query change
@@ -97,7 +93,7 @@ function SearchContent() {
     if (query.trim()) {
       fetchResults(query);
     }
-  }, [itemType, price, ecu, sort, fetchResults, query]);
+  }, [itemType, price, sort, fetchResults, query]);
 
   const handleSearchSelect = (term: string) => {
     setQuery(term);
@@ -158,23 +154,6 @@ function SearchContent() {
               }`}
             >
               {p.label}
-            </button>
-          ))}
-        </div>
-
-        {/* ECU filter */}
-        <div className="flex gap-1 flex-wrap">
-          {ECU_TYPES.map((e) => (
-            <button
-              key={e}
-              onClick={() => setEcu(e)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
-                ecu === e
-                  ? "border-[var(--accent)] text-[var(--accent)] bg-[var(--accent-light)]"
-                  : "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--accent)]"
-              }`}
-            >
-              {e}
             </button>
           ))}
         </div>

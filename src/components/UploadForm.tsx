@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { showToast } from "@/components/Toast";
 import { validateLayout } from "@/lib/widget-schema";
+import { studioCaptureUrl, studioPreviewUrl, studioBase } from "@/lib/studio";
 
-const ECU_TYPES = ["MaxxECU", "Haltech", "Link", "AEM", "MoTeC", "Ecumaster", "Custom"];
 const CAN_SPEEDS = ["500 kbps", "1 Mbps", "Other"];
 
 /* ------------------------------------------------------------------ */
@@ -30,67 +30,29 @@ interface ParsedDbc {
 /*  Step indicator                                                     */
 /* ------------------------------------------------------------------ */
 
-const STEP_LABELS = ["File", "Details", "Publish"];
+/* Read a File as bare base64 (no data: prefix) — used to hand .rdm bytes to
+   Studio's preview iframe over postMessage. */
+function fileToBase64(f: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const res = reader.result as string; // data URL
+      resolve(res.slice(res.indexOf(",") + 1));
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(f);
+  });
+}
 
-function StepIndicator({
-  current,
-  onGoTo,
-}: {
-  current: number;
-  onGoTo: (step: number) => void;
-}) {
-  return (
-    <div className="flex items-center justify-center gap-2 mb-8">
-      {STEP_LABELS.map((label, i) => {
-        const step = i + 1;
-        const isActive = step === current;
-        const isDone = step < current;
-        const canClick = step < current;
-        return (
-          <div key={label} className="flex items-center gap-2">
-            {i > 0 && (
-              <div
-                className={`w-8 h-px ${
-                  isDone ? "bg-[var(--accent)]" : "bg-[var(--border)]"
-                }`}
-              />
-            )}
-            <button
-              type="button"
-              disabled={!canClick}
-              onClick={() => canClick && onGoTo(step)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide transition-colors ${
-                isActive
-                  ? "bg-[var(--accent)] text-white"
-                  : isDone
-                  ? "bg-[var(--accent)]/20 text-[var(--accent)] cursor-pointer hover:bg-[var(--accent)]/30"
-                  : "bg-[var(--bg)] text-[var(--text-muted)] border border-[var(--border)] cursor-default"
-              }`}
-            >
-              <span
-                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                  isActive
-                    ? "bg-white text-[var(--accent)]"
-                    : isDone
-                    ? "bg-[var(--accent)] text-white"
-                    : "bg-[var(--border)] text-[var(--text-muted)]"
-                }`}
-              >
-                {isDone ? (
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                ) : (
-                  step
-                )}
-              </span>
-              {label}
-            </button>
-          </div>
-        );
-      })}
-    </div>
-  );
+/* Turn a data URL (the image Studio sends back) into a File so it flows through
+   the same upload path as a manually-chosen screenshot. */
+function dataUrlToFile(dataUrl: string, filename: string): File {
+  const [meta, b64] = dataUrl.split(",");
+  const mime = (meta.match(/data:(.*?);base64/) || [])[1] || "image/png";
+  const bin = atob(b64);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new File([arr], filename, { type: mime });
 }
 
 /* ------------------------------------------------------------------ */
@@ -123,8 +85,6 @@ export function UploadForm({
   userId: string;
   onSuccess: () => void;
 }) {
-  // Wizard step
-  const [step, setStep] = useState(1);
 
   // Step 1 state
   const [itemType, setItemType] = useState<"layout" | "dbc" | "splash">("layout");
@@ -148,7 +108,6 @@ export function UploadForm({
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
-  const [ecuType, setEcuType] = useState("");
   const [vehicleMake, setVehicleMake] = useState("");
   const [vehicleModel, setVehicleModel] = useState("");
   const [vehicleYear, setVehicleYear] = useState("");
@@ -156,6 +115,9 @@ export function UploadForm({
   const [compatibilityNotes, setCompatibilityNotes] = useState("");
   const [customScreenshot, setCustomScreenshot] = useState<File | null>(null);
   const customScreenshotRef = useRef<HTMLInputElement>(null);
+  const [generatingPreview, setGeneratingPreview] = useState(false);
+  const [previewNonce, setPreviewNonce] = useState(0);
+  const previewIframeRef = useRef<HTMLIFrameElement>(null);
 
   // Step 3 state
   const [uploading, setUploading] = useState(false);
@@ -212,7 +174,6 @@ export function UploadForm({
           };
           setParsedRdm(result);
           setName(result.name);
-          if (result.ecu) setEcuType(result.ecu);
           return;
         }
         offset += dataLen;
@@ -321,7 +282,6 @@ export function UploadForm({
     setParsedRdm(null);
     setParsedDbc(null);
     setName("");
-    setEcuType("");
     setCustomScreenshot(null);
   }, []);
 
@@ -341,6 +301,73 @@ export function UploadForm({
   const priceValid = price === "" || price === "0" || priceNum === 0 || priceNum >= 1;
 
   /* ---------------------------------------------------------------- */
+  /*  Inline preview generation (pre-publish)                          */
+  /* ---------------------------------------------------------------- */
+
+  /* Kicks off generation by mounting the hidden Studio preview iframe; the
+     postMessage handshake runs in the effect below. */
+  const generatePreviewInline = () => {
+    if (!file) return;
+    setError("");
+    setPreviewNonce(Date.now()); // fresh Studio load each attempt (cache-bust)
+    setGeneratingPreview(true);
+  };
+
+  /**
+   * Generate a preview WITHOUT publishing first, entirely in the background:
+   * while `generatingPreview` is true a hidden Studio iframe is mounted; we hand
+   * it the .rdm bytes over postMessage and it sends the captured image back. The
+   * result becomes the (overridable) custom screenshot so the user reviews it on
+   * the spot. No popup/tab — the iframe is offscreen-but-rendered so its WebGL
+   * canvas still paints.
+   */
+  useEffect(() => {
+    if (!generatingPreview || !file) return;
+    const studioOrigin = new URL(studioBase()).origin;
+    let settled = false;
+
+    const onMessage = async (ev: MessageEvent) => {
+      if (ev.origin !== studioOrigin) return;
+      const data = (ev.data || {}) as { type?: string; image?: string; error?: string };
+
+      if (data.type === "studio-preview-ready") {
+        try {
+          const bytes = await fileToBase64(file);
+          previewIframeRef.current?.contentWindow?.postMessage(
+            { type: "rdm-bytes", name: file.name, bytes },
+            studioOrigin,
+          );
+        } catch {
+          settled = true;
+          setError("Couldn't read the layout file for preview.");
+          setGeneratingPreview(false);
+        }
+      } else if (data.type === "studio-preview-result" && typeof data.image === "string") {
+        settled = true;
+        setCustomScreenshot(dataUrlToFile(data.image, "preview.png"));
+        setGeneratingPreview(false);
+      } else if (data.type === "studio-preview-error") {
+        settled = true;
+        setError("Preview generation failed: " + (data.error || "unknown error"));
+        setGeneratingPreview(false);
+      }
+    };
+
+    window.addEventListener("message", onMessage);
+    const timeout = setTimeout(() => {
+      if (!settled) {
+        setError("Preview generation timed out — you can upload your own image instead.");
+        setGeneratingPreview(false);
+      }
+    }, 45000);
+
+    return () => {
+      window.removeEventListener("message", onMessage);
+      clearTimeout(timeout);
+    };
+  }, [generatingPreview, file]);
+
+  /* ---------------------------------------------------------------- */
   /*  Publish handler                                                  */
   /* ---------------------------------------------------------------- */
 
@@ -348,6 +375,18 @@ export function UploadForm({
     if (!file) return;
     setError("");
     setUploading(true);
+
+    // Auto-generate a preview when the user didn't supply their own image (layout
+    // /splash only — DBC files have no dashboard to render). Open the Studio tab
+    // NOW, synchronously inside this click, so it isn't popup-blocked after the
+    // awaits below; we navigate it to the capture URL once the row + token exist,
+    // or close it if publishing fails. Null the opener for safety.
+    const wantsAutoCapture = !customScreenshot && (itemType === "layout" || itemType === "splash");
+    let captureWindow: Window | null = null;
+    if (wantsAutoCapture) {
+      captureWindow = window.open("about:blank", "_blank");
+      if (captureWindow) captureWindow.opener = null;
+    }
 
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -492,7 +531,7 @@ export function UploadForm({
           item_type: itemType,
           name,
           description: description || null,
-          ecu_type: ecuType || null,
+          ecu_type: null,
           tags: tagList,
           screenshot_url: screenshotUrl || null,
           rdm_url: fileUrl,
@@ -526,9 +565,38 @@ export function UploadForm({
         });
       }
 
+      // Auto-generate the preview: mint a capture token and send the pre-opened
+      // Studio tab off to render + capture a "standard demo pose" frame, which it
+      // POSTs back to /api/layout-screenshot. Best-effort — a failure here doesn't
+      // fail the publish; the user can retry from the dashboard's Generate preview.
+      if (wantsAutoCapture && inserted?.id && captureWindow) {
+        try {
+          const tokenRes = await fetch("/api/capture-token", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({ layoutId: inserted.id }),
+          });
+          const tokenJson = await tokenRes.json();
+          if (tokenJson.ok) {
+            captureWindow.location.href = studioCaptureUrl(inserted.id, fileUrl, name, tokenJson.token);
+          } else {
+            captureWindow.close();
+          }
+        } catch {
+          captureWindow.close();
+        }
+      } else if (captureWindow) {
+        // wantsAutoCapture was true but we have no row/token to send it to.
+        captureWindow.close();
+      }
+
       showToast("Your listing has been published!", "success");
       onSuccess();
     } catch (err: unknown) {
+      captureWindow?.close();
       const msg =
         err instanceof Error
           ? err.message
@@ -554,8 +622,6 @@ export function UploadForm({
         Share your dashboard layout or DBC file with the community
       </p>
 
-      <StepIndicator current={step} onGoTo={setStep} />
-
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-card p-3 mb-4">
           {error}
@@ -563,10 +629,9 @@ export function UploadForm({
       )}
 
       {/* ============================================================ */}
-      {/*  STEP 1: File & Type                                         */}
+      {/*  File & Type                                                 */}
       {/* ============================================================ */}
-      {step === 1 && (
-        <div>
+      <div>
           {/* Type toggle cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
             <button
@@ -707,9 +772,6 @@ export function UploadForm({
                       {parsedRdm.signalCount > 0 && (
                         <Badge color="#10b981">{parsedRdm.signalCount} signals</Badge>
                       )}
-                      {parsedRdm.ecu && (
-                        <Badge color="#f59e0b">{parsedRdm.ecu}</Badge>
-                      )}
                     </>
                   )}
                   {itemType === "dbc" && parsedDbc && (
@@ -764,25 +826,13 @@ export function UploadForm({
             </div>
           )}
 
-          {/* Next button */}
-          <div className="flex justify-end mt-6">
-            <button
-              type="button"
-              disabled={!file || layoutValidationErrors.length > 0}
-              onClick={() => setStep(2)}
-              className="bg-[var(--accent)] text-white font-bold px-6 py-2.5 rounded-card text-sm uppercase tracking-wide hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
+      </div>
 
       {/* ============================================================ */}
-      {/*  STEP 2: Details                                              */}
+      {/*  Details — revealed automatically once a file is selected     */}
       {/* ============================================================ */}
-      {step === 2 && (
-        <div>
+      {file && (
+        <div className="mt-6 pt-6 border-t border-[var(--border)]">
           {/* Common fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
@@ -854,29 +904,33 @@ export function UploadForm({
                 {itemType === "splash" ? "Splash Details" : "Layout Details"}
               </h3>
 
-              {itemType === "layout" && (
-                <div className="mb-4">
-                  <label className="block text-xs text-[var(--text-muted)] mb-1">ECU Type</label>
-                  <select
-                    value={ecuType}
-                    onChange={(e) => setEcuType(e.target.value)}
-                    className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-card px-3 py-2 text-sm text-[var(--text)] focus:outline-none focus:border-[var(--accent)]"
-                  >
-                    <option value="">Select ECU...</option>
-                    {ECU_TYPES.map((e) => (
-                      <option key={e} value={e}>{e}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Screenshot section */}
+              {/* Preview image section */}
               <div className="mb-4">
                 <label className="block text-xs text-[var(--text-muted)] mb-2">
-                  Screenshot <span className="text-red-400">*</span>
+                  Preview Image <span className="text-[var(--text-muted)]">(auto-generated)</span>
                 </label>
 
-                {previewScreenshotUrl && (
+                {generatingPreview ? (
+                  /* Background render: the Studio iframe is mounted but visually
+                     covered by a spinner. It's kept on-screen (not display:none)
+                     so its WebGL canvas actually paints; the overlay hides the
+                     Studio UI while it works. */
+                  <div className="relative mb-3 w-full max-w-md aspect-video rounded-card overflow-hidden border border-[var(--border)] bg-black">
+                    <iframe
+                      ref={previewIframeRef}
+                      src={studioPreviewUrl(previewNonce)}
+                      title="Generating preview"
+                      className="absolute inset-0 w-full h-full border-0"
+                    />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[var(--bg)]/90 text-[var(--text-muted)]">
+                      <svg className="w-6 h-6 animate-spin text-[var(--accent)]" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      <span className="text-xs font-medium">Generating preview…</span>
+                    </div>
+                  </div>
+                ) : previewScreenshotUrl && (
                   <div className="mb-3 inline-block rounded-card overflow-hidden border border-[var(--border)]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -895,25 +949,47 @@ export function UploadForm({
                   onChange={(e) => setCustomScreenshot(e.target.files?.[0] || null)}
                   className="hidden"
                 />
-                <button
-                  type="button"
-                  onClick={() => customScreenshotRef.current?.click()}
-                  className="text-xs font-bold text-[var(--accent)] hover:underline"
-                >
-                  {customScreenshot ? "Change screenshot" : "Upload screenshot"}
-                </button>
-                {customScreenshot && (
+                <div className="flex items-center gap-3 flex-wrap">
+                  {itemType === "layout" && (
+                    <button
+                      type="button"
+                      onClick={generatePreviewInline}
+                      disabled={generatingPreview || !file}
+                      className="inline-flex items-center gap-2 text-xs font-bold bg-[var(--accent)] text-white px-3 py-1.5 rounded-md hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {generatingPreview && (
+                        <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                      )}
+                      {generatingPreview
+                        ? "Generating…"
+                        : customScreenshot ? "Regenerate preview" : "Generate preview"}
+                    </button>
+                  )}
                   <button
                     type="button"
-                    onClick={() => setCustomScreenshot(null)}
-                    className="text-xs text-[var(--text-muted)] hover:underline ml-3"
+                    onClick={() => customScreenshotRef.current?.click()}
+                    className="text-xs font-bold text-[var(--accent)] hover:underline"
                   >
-                    Remove
+                    {customScreenshot ? "Change image" : "Upload your own"}
                   </button>
-                )}
-                {!customScreenshot && (
-                  <p className="text-[11px] text-red-400 mt-1">
-                    A screenshot is required
+                  {customScreenshot && (
+                    <button
+                      type="button"
+                      onClick={() => setCustomScreenshot(null)}
+                      className="text-xs text-[var(--text-muted)] hover:underline"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                {!customScreenshot && !generatingPreview && (
+                  <p className="text-[11px] text-[var(--text-muted)] mt-2">
+                    {itemType === "layout"
+                      ? "Click Generate preview to render your layout now and review it here, or upload your own. If you skip this, a preview is generated automatically when you publish."
+                      : "A preview is generated automatically when you publish. Upload your own image to override it."}
                   </p>
                 )}
               </div>
@@ -1039,147 +1115,13 @@ export function UploadForm({
             </div>
           )}
 
-          {/* Navigation buttons */}
-          <div className="flex justify-between mt-6">
+          {/* Publish */}
+          <div className="flex justify-end mt-6 pt-6 border-t border-[var(--border)]">
             <button
               type="button"
-              onClick={() => setStep(1)}
-              className="border border-[var(--border)] text-[var(--text)] font-bold px-6 py-2.5 rounded-card text-sm uppercase tracking-wide hover:bg-[var(--bg)] transition-colors"
-            >
-              Back
-            </button>
-            <button
-              type="button"
-              disabled={!name || !priceValid || ((itemType === "layout" || itemType === "splash") && !customScreenshot)}
-              onClick={() => setStep(3)}
-              className="bg-[var(--accent)] text-white font-bold px-6 py-2.5 rounded-card text-sm uppercase tracking-wide hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ============================================================ */}
-      {/*  STEP 3: Preview & Publish                                    */}
-      {/* ============================================================ */}
-      {step === 3 && (
-        <div>
-          <h3 className="font-heading text-lg font-bold uppercase text-[var(--text)] mb-4">
-            Preview Your Listing
-          </h3>
-
-          {/* Mock LayoutCard-style preview */}
-          <div className="max-w-sm mx-auto mb-8">
-            <div className="bg-[var(--surface)] border border-[var(--border)] rounded-card overflow-hidden">
-              <div className={`${itemType === "dbc" ? "aspect-[3/1]" : "aspect-[16/9]"} bg-[#0a0a0c] relative overflow-hidden`}>
-                {previewScreenshotUrl && (itemType === "layout" || itemType === "splash") ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={previewScreenshotUrl} alt={name} className="w-full h-full object-contain" />
-                ) : itemType === "dbc" ? (
-                  <div className="w-full h-full flex items-center justify-center gap-3">
-                    <span className="font-heading text-3xl font-bold text-gray-600 uppercase">.dbc</span>
-                  </div>
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-500 text-sm">
-                    No Preview
-                  </div>
-                )}
-                <div className="absolute top-2 left-2 flex gap-1">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                    itemType === "dbc" ? "bg-blue-500 text-white"
-                    : itemType === "splash" ? "bg-purple-600 text-white"
-                    : "bg-gray-700 text-white"
-                  }`}>
-                    {itemType === "dbc" ? "DBC" : itemType === "splash" ? "SPLASH" : "LAYOUT"}
-                  </span>
-                </div>
-                {priceNum === 0 ? (
-                  <span className="absolute top-2 right-2 bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">
-                    FREE
-                  </span>
-                ) : (
-                  <span className="absolute top-2 right-2 bg-[var(--accent)] text-white text-[10px] font-bold px-2 py-0.5 rounded">
-                    ${priceNum.toFixed(2)}
-                  </span>
-                )}
-              </div>
-              <div className="p-4">
-                <h3 className="font-heading text-sm font-bold uppercase text-[var(--text)] truncate">
-                  {name}
-                </h3>
-                <p className="text-xs text-[var(--text-muted)] mt-1">by You</p>
-                <div className="flex items-center gap-2 mt-3 text-[10px] text-[var(--text-muted)]">
-                  {ecuType && (
-                    <span className="bg-[var(--bg)] px-1.5 py-0.5 rounded font-medium">{ecuType}</span>
-                  )}
-                  {itemType === "layout" && parsedRdm && parsedRdm.widgetCount > 0 && (
-                    <span>{parsedRdm.widgetCount}w</span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Summary table */}
-          <div className="bg-[var(--bg)] rounded-card p-4 mb-6">
-            <h4 className="font-heading text-xs font-bold uppercase text-[var(--text-muted)] mb-3 tracking-wide">
-              Listing Summary
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
-              <SummaryRow label="Type" value={itemType === "layout" ? "Dashboard Layout" : itemType === "splash" ? "Splash Screen" : "DBC File"} />
-              <SummaryRow label="File" value={file?.name || "—"} />
-              <SummaryRow label="File Size" value={file ? `${(file.size / 1024).toFixed(1)} KB` : "—"} />
-              <SummaryRow label="Name" value={name} />
-              <SummaryRow label="Price" value={priceNum === 0 ? "Free" : `$${priceNum.toFixed(2)}`} />
-              {description && <SummaryRow label="Description" value={description} span />}
-              {tags && <SummaryRow label="Tags" value={tags} />}
-
-              {itemType === "layout" && (
-                <>
-                  {ecuType && <SummaryRow label="ECU Type" value={ecuType} />}
-                  {parsedRdm && parsedRdm.widgetCount > 0 && (
-                    <SummaryRow label="Widgets" value={String(parsedRdm.widgetCount)} />
-                  )}
-                  {parsedRdm && parsedRdm.signalCount > 0 && (
-                    <SummaryRow label="Signals" value={String(parsedRdm.signalCount)} />
-                  )}
-                  <SummaryRow
-                    label="Screenshot"
-                    value={customScreenshot ? customScreenshot.name : "None"}
-                  />
-                </>
-              )}
-
-              {itemType === "dbc" && (
-                <>
-                  {vehicleMake && <SummaryRow label="Vehicle" value={[vehicleYear, vehicleMake, vehicleModel].filter(Boolean).join(" ")} />}
-                  {canSpeed && <SummaryRow label="CAN Speed" value={canSpeed} />}
-                  {parsedDbc && <SummaryRow label="Signals" value={String(parsedDbc.signalCount)} />}
-                  {parsedDbc && <SummaryRow label="Messages" value={String(parsedDbc.messageCount)} />}
-                  {parsedDbc && parsedDbc.canIds.length > 0 && (
-                    <SummaryRow label="CAN IDs" value={parsedDbc.canIds.slice(0, 10).join(", ") + (parsedDbc.canIds.length > 10 ? ` (+${parsedDbc.canIds.length - 10})` : "")} span />
-                  )}
-                  {compatibilityNotes && <SummaryRow label="Compatibility" value={compatibilityNotes} span />}
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Navigation buttons */}
-          <div className="flex justify-between">
-            <button
-              type="button"
-              onClick={() => setStep(2)}
-              className="border border-[var(--border)] text-[var(--text)] font-bold px-6 py-2.5 rounded-card text-sm uppercase tracking-wide hover:bg-[var(--bg)] transition-colors"
-            >
-              Go Back
-            </button>
-            <button
-              type="button"
-              disabled={uploading}
+              disabled={uploading || !name || !priceValid || layoutValidationErrors.length > 0}
               onClick={handlePublish}
-              className="bg-[var(--accent)] text-white font-bold px-8 py-2.5 rounded-card text-sm uppercase tracking-wide hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="bg-[var(--accent)] text-white font-bold px-8 py-2.5 rounded-card text-sm uppercase tracking-wide hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {uploading ? (
                 <>
@@ -1196,27 +1138,7 @@ export function UploadForm({
           </div>
         </div>
       )}
-    </div>
-  );
-}
 
-/* ------------------------------------------------------------------ */
-/*  Summary row helper                                                 */
-/* ------------------------------------------------------------------ */
-
-function SummaryRow({
-  label,
-  value,
-  span,
-}: {
-  label: string;
-  value: string;
-  span?: boolean;
-}) {
-  return (
-    <div className={span ? "sm:col-span-2" : ""}>
-      <span className="text-[var(--text-muted)] text-xs">{label}: </span>
-      <span className="text-[var(--text)] text-xs font-medium">{value}</span>
     </div>
   );
 }

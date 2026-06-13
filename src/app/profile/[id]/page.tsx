@@ -71,7 +71,6 @@ export default function ProfilePage() {
 
   if (!profile) return null;
 
-  const totalDownloads = layouts.reduce((sum, x) => sum + x.downloads, 0);
   const ratedLayouts = layouts.filter((l) => l.rating > 0);
   const avgRating = ratedLayouts.length > 0
     ? ratedLayouts.reduce((sum, l) => sum + l.rating, 0) / ratedLayouts.length
@@ -128,14 +127,10 @@ export default function ProfilePage() {
         </div>
 
         {/* Stats Bar */}
-        <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-[var(--border)]">
+        <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-[var(--border)]">
           <div className="text-center">
             <p className="text-2xl font-heading font-bold">{layouts.length}</p>
             <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide">Total Items</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-heading font-bold">{totalDownloads.toLocaleString()}</p>
-            <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide">Downloads</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-heading font-bold">

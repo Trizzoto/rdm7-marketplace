@@ -101,13 +101,7 @@ export function LayoutPreviewModal({
               <p className="text-sm text-[var(--text-muted)] mt-1">by {authorName}</p>
             </div>
             <div className="flex items-center gap-3 text-xs text-[var(--text-muted)] shrink-0">
-              {layout.ecu_type && (
-                <span className="bg-[var(--bg)] px-2 py-1 rounded font-medium">
-                  {layout.ecu_type}
-                </span>
-              )}
               {!isDbc && <span>{layout.widget_count} widgets</span>}
-              <span>{layout.downloads} downloads</span>
               {layout.rating > 0 && (
                 <span className="flex items-center gap-1">
                   <span className="text-[var(--accent)]">&#9733;</span>

@@ -6,11 +6,11 @@ import type { Layout } from "@/lib/supabase";
 import { UploadForm } from "@/components/UploadForm";
 import { EditForm } from "@/components/EditForm";
 import { AuthGuard } from "@/components/AuthGuard";
+import { studioCaptureUrl } from "@/lib/studio";
 import Link from "next/link";
 
 type Stats = {
   totalUploads: number;
-  totalDownloads: number;
   avgRating: number;
 };
 
@@ -23,7 +23,7 @@ type PurchaseRow = {
 function DashboardContent() {
   const [userId, setUserId] = useState<string | null>(null);
   const [layouts, setLayouts] = useState<Layout[]>([]);
-  const [stats, setStats] = useState<Stats>({ totalUploads: 0, totalDownloads: 0, avgRating: 0 });
+  const [stats, setStats] = useState<Stats>({ totalUploads: 0, avgRating: 0 });
   const [showUpload, setShowUpload] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"layout" | "dbc" | "splash">("layout");
@@ -95,13 +95,12 @@ function DashboardContent() {
     const items = (data as Layout[]) || [];
     setLayouts(items);
 
-    const totalDownloads = items.reduce((sum, l) => sum + l.downloads, 0);
     const rated = items.filter((l) => l.rating > 0);
     const avgRating = rated.length > 0
       ? rated.reduce((sum, l) => sum + l.rating, 0) / rated.length
       : 0;
 
-    setStats({ totalUploads: items.length, totalDownloads, avgRating });
+    setStats({ totalUploads: items.length, avgRating });
     setLoading(false);
   }, []);
 
@@ -114,6 +113,49 @@ function DashboardContent() {
     if (!confirm("Delete this layout permanently?")) return;
     await supabase.from("layouts").delete().eq("id", layoutId);
     if (userId) fetchMyLayouts(userId);
+  };
+
+  // Mint a short-lived capture token, then open Studio to auto-generate a
+  // preview. Studio runs the sim, captures a frame, and posts it back to
+  // /api/layout-screenshot using this token (no Supabase login needed there).
+  const generatePreview = async (l: Layout) => {
+    if (!l.rdm_url) return;
+    // Open the tab SYNCHRONOUSLY inside the click gesture, then navigate it once
+    // we have the token. A window.open() after the awaits below would be outside
+    // the user-gesture context and get blocked / opened in the background — and a
+    // backgrounded Studio tab captures a blank frame. Null the opener so the
+    // navigated-away tab can't reach back into this page.
+    const studioWindow = window.open("about:blank", "_blank");
+    if (studioWindow) studioWindow.opener = null;
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      studioWindow?.close();
+      alert("Your session expired — please sign in again.");
+      return;
+    }
+    try {
+      const res = await fetch("/api/capture-token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ layoutId: l.id }),
+      });
+      const json = await res.json();
+      if (!json.ok) {
+        studioWindow?.close();
+        alert(`Could not start preview generation: ${json.error || "unknown error"}`);
+        return;
+      }
+      const url = studioCaptureUrl(l.id, l.rdm_url, l.name, json.token);
+      if (studioWindow) studioWindow.location.href = url;
+      else window.open(url, "_blank", "noopener"); // popup was blocked anyway; last try
+    } catch {
+      studioWindow?.close();
+      alert("Could not reach the server to start preview generation.");
+    }
   };
 
   const startEditPrice = (layout: Layout) => {
@@ -145,7 +187,6 @@ function DashboardContent() {
 
   const statCards = [
     { label: "TOTAL UPLOADS", value: stats.totalUploads.toString(), color: "var(--accent)" },
-    { label: "TOTAL DOWNLOADS", value: stats.totalDownloads.toLocaleString(), color: "#2563EB" },
     { label: "AVG RATING", value: stats.avgRating > 0 ? stats.avgRating.toFixed(1) : "--", color: "#F59E0B" },
     { label: "EARNINGS", value: totalEarnings > 0 ? `$${totalEarnings.toFixed(2)}` : "--", color: "#10B981" },
   ];
@@ -172,7 +213,7 @@ function DashboardContent() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         {statCards.map((s) => (
           <div
             key={s.label}
@@ -332,7 +373,6 @@ function DashboardContent() {
                   </span>
                 </div>
                 <div className="flex items-center gap-4 text-xs text-[var(--text-muted)]">
-                  <span>{l.downloads} downloads</span>
                   {l.item_type === "layout" && <span>{l.widget_count} widgets</span>}
                   {l.rating > 0 && (
                     <span className="flex items-center gap-0.5">
@@ -346,6 +386,16 @@ function DashboardContent() {
                   >
                     {l.is_published ? "Published" : "Draft"}
                   </span>
+                  {!l.screenshot_url && l.item_type !== "dbc" && l.rdm_url && (
+                    <button
+                      type="button"
+                      onClick={() => generatePreview(l)}
+                      className="font-medium text-[var(--accent)] hover:underline"
+                      title="Open in Studio to auto-generate a live preview image"
+                    >
+                      Generate preview &rarr;
+                    </button>
+                  )}
                 </div>
               </div>
 

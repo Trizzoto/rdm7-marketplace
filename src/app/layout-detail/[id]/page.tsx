@@ -94,9 +94,6 @@ export default async function LayoutDetailPage({ params }: { params: Promise<{ i
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${isDbc ? "bg-blue-500 text-white" : isSplash ? "bg-purple-600 text-white" : "bg-gray-700 text-white"}`}>
               {isDbc ? "DBC" : isSplash ? "SPLASH" : "LAYOUT"}
             </span>
-            {layout.ecu_type && (
-              <span className="text-xs font-medium bg-[var(--bg)] border border-[var(--border)] px-2 py-0.5 rounded text-[var(--text-muted)]">{layout.ecu_type}</span>
-            )}
           </div>
 
           <h1 className="font-heading text-4xl font-bold uppercase mb-3 leading-tight">{layout.name}</h1>
@@ -111,7 +108,6 @@ export default async function LayoutDetailPage({ params }: { params: Promise<{ i
                 {layout.rating.toFixed(1)} ({layout.rating_count} reviews)
               </span>
             )}
-            <span>{layout.downloads} downloads</span>
           </div>
 
           {layout.description && (
@@ -151,10 +147,6 @@ export default async function LayoutDetailPage({ params }: { params: Promise<{ i
               <div className="flex justify-between">
                 <span>Version</span>
                 <span className="font-medium text-[var(--text)]">v{layout.version ?? 1}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Downloads</span>
-                <span className="font-medium text-[var(--text)]">{layout.downloads}</span>
               </div>
               {!isDbc && !isSplash && (
                 <div className="flex justify-between">
