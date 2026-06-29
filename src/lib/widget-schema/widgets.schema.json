@@ -25,14 +25,39 @@
           "label": "RPM Max",
           "type": "number",
           "default": 7000,
-          "category": "data"
+          "category": "data",
+          "group": "Value",
+          "help": "The highest RPM the bar shows. It fills from 0 up to here."
         },
         {
           "name": "redline",
           "label": "Redline RPM",
           "type": "number",
           "default": 6000,
-          "category": "data"
+          "category": "data",
+          "group": "Value",
+          "help": "The RPM where the red warning zone starts - the bar changes colour past this point."
+        },
+        {
+          "name": "limiter_value",
+          "label": "Limiter RPM",
+          "type": "number",
+          "default": 7000,
+          "category": "data",
+          "group": "Value",
+          "help": "The RPM where your rev limiter kicks in - the bar reacts here."
+        },
+        {
+          "name": "smoothing_ms",
+          "label": "Smoothing (ms)",
+          "type": "slider",
+          "default": 40,
+          "category": "data",
+          "min": 0,
+          "max": 300,
+          "step": 10,
+          "group": "Behaviour",
+          "help": "Smooths out jumpy readings. Higher is smoother but slower to react; 0 shows the raw value."
         },
         {
           "name": "bar_color",
@@ -40,35 +65,34 @@
           "type": "color",
           "default": "#00FF00",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Fill",
+          "help": "Colour of the bar below the redline."
         },
         {
-          "name": "limiter_effect",
-          "label": "Limiter Effect",
+          "name": "fill_dir",
+          "label": "Fill Direction",
           "type": "select",
           "default": 0,
           "category": "appearance",
           "options": [
-            {
-              "value": 0,
-              "label": "None"
-            },
-            {
-              "value": 1,
-              "label": "Bar Flash"
-            },
-            {
-              "value": 2,
-              "label": "Bar Solid"
-            }
-          ]
+            { "value": 0, "label": "Left to Right" },
+            { "value": 1, "label": "Right to Left" },
+            { "value": 2, "label": "Center Out" },
+            { "value": 3, "label": "Edges In" }
+          ],
+          "group": "Fill",
+          "help": "Which way the bar fills (left, right, up or down)."
         },
         {
-          "name": "limiter_value",
-          "label": "Limiter RPM",
-          "type": "number",
-          "default": 7000,
-          "category": "data"
+          "name": "bar_bg_color",
+          "label": "Background",
+          "type": "color",
+          "default": "#F0F0F0",
+          "category": "appearance",
+          "night_overridable": true,
+          "group": "Frame",
+          "help": "Colour of the empty background."
         },
         {
           "name": "limiter_color",
@@ -76,24 +100,18 @@
           "type": "color",
           "default": "#FF0000",
           "category": "appearance",
-          "night_overridable": true
-        },
-        {
-          "name": "flash_speed",
-          "label": "Flash Speed (ms)",
-          "type": "stepper",
-          "default": 200,
-          "category": "appearance",
-          "min": 50,
-          "max": 1000,
-          "step": 50
+          "night_overridable": true,
+          "group": "Redline",
+          "help": "Colour shown when you hit the limiter."
         },
         {
           "name": "show_ticks",
           "label": "Show Ticks",
           "type": "checkbox",
           "default": true,
-          "category": "appearance"
+          "category": "appearance",
+          "group": "Ticks",
+          "help": "Show marks along the bar."
         },
         {
           "name": "tick_side",
@@ -103,29 +121,12 @@
           "category": "appearance",
           "enabled_by": "show_ticks",
           "options": [
-            {
-              "value": 0,
-              "label": "Top"
-            },
-            {
-              "value": 1,
-              "label": "Bottom"
-            },
-            {
-              "value": 2,
-              "label": "Both"
-            }
-          ]
-        },
-        {
-          "name": "tick_length",
-          "label": "Tick Length",
-          "type": "stepper",
-          "default": 12,
-          "category": "appearance",
-          "min": 1,
-          "max": 40,
-          "enabled_by": "show_ticks"
+            { "value": 0, "label": "Top" },
+            { "value": 1, "label": "Bottom" },
+            { "value": 2, "label": "Both" }
+          ],
+          "group": "Ticks",
+          "help": "Which side of the bar the marks sit on."
         },
         {
           "name": "tick_width",
@@ -135,7 +136,21 @@
           "category": "appearance",
           "min": 1,
           "max": 12,
-          "enabled_by": "show_ticks"
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "How thick the marks are."
+        },
+        {
+          "name": "tick_length",
+          "label": "Tick Length",
+          "type": "stepper",
+          "default": 12,
+          "category": "appearance",
+          "min": 1,
+          "max": 40,
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "How long the marks are."
         },
         {
           "name": "tick_color",
@@ -144,15 +159,36 @@
           "default": "#000000",
           "category": "appearance",
           "night_overridable": true,
-          "enabled_by": "show_ticks"
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "Colour of the marks."
         },
         {
-          "name": "bar_bg_color",
-          "label": "Background",
-          "type": "color",
-          "default": "#F0F0F0",
+          "name": "limiter_effect",
+          "label": "Limiter Effect",
+          "type": "select",
+          "default": 0,
           "category": "appearance",
-          "night_overridable": true
+          "options": [
+            { "value": 0, "label": "None" },
+            { "value": 1, "label": "Bar Flash" },
+            { "value": 2, "label": "Bar Solid" }
+          ],
+          "group": "Behaviour",
+          "help": "What happens at the limiter - flash, or just change colour."
+        },
+        {
+          "name": "flash_speed",
+          "label": "Flash Speed (ms)",
+          "type": "stepper",
+          "default": 200,
+          "category": "appearance",
+          "min": 50,
+          "max": 1000,
+          "step": 50,
+          "group": "Behaviour",
+          "help": "How fast it flashes at the limiter (smaller = faster), in milliseconds.",
+          "enabled_by": "limiter_effect=1"
         }
       ]
     },
@@ -177,211 +213,27 @@
           "label": "Header Label",
           "type": "text",
           "default": "",
-          "category": "data"
-        },
-        {
-          "name": "custom_text",
-          "label": "Unit Text",
-          "type": "text",
-          "default": "",
-          "category": "data"
+          "category": "data",
+          "group": "Value",
+          "help": "The title shown above the number (e.g. COOLANT)."
         },
         {
           "name": "decimals",
           "label": "Decimals",
           "type": "number",
           "default": 0,
-          "category": "data"
-        },
-        {
-          "name": "show_peak",
-          "label": "Peak Hold",
-          "type": "select",
-          "default": 0,
           "category": "data",
-          "options": [
-            {
-              "value": 0,
-              "label": "Off"
-            },
-            {
-              "value": 1,
-              "label": "Max"
-            },
-            {
-              "value": 2,
-              "label": "Min"
-            },
-            {
-              "value": 3,
-              "label": "Min/Max"
-            }
-          ]
-        },
-        {
-          "name": "warning_high_enabled",
-          "label": "High Alert",
-          "type": "checkbox",
-          "default": false,
-          "category": "alerts",
-          "group": "high"
-        },
-        {
-          "name": "warning_high_threshold",
-          "label": "Threshold",
-          "type": "stepper",
-          "default": 0,
-          "category": "alerts",
-          "group": "high",
-          "min": -99999,
-          "max": 99999,
-          "enabled_by": "warning_high_enabled"
-        },
-        {
-          "name": "warning_high_color",
-          "label": "High Color",
-          "type": "color",
-          "default": "#FF0000",
-          "category": "alerts",
-          "group": "high"
-        },
-        {
-          "name": "warning_high_apply_label",
-          "label": "Title",
-          "type": "checkbox",
-          "default": true,
-          "category": "alerts",
-          "group": "high",
-          "inline": "warning_high_apply"
-        },
-        {
-          "name": "warning_high_apply_value",
-          "label": "Value",
-          "type": "checkbox",
-          "default": true,
-          "category": "alerts",
-          "group": "high",
-          "inline": "warning_high_apply"
-        },
-        {
-          "name": "warning_high_apply_panel",
-          "label": "Border",
-          "type": "checkbox",
-          "default": false,
-          "category": "alerts",
-          "group": "high",
-          "inline": "warning_high_apply"
-        },
-        {
-          "name": "warning_low_enabled",
-          "label": "Low Alert",
-          "type": "checkbox",
-          "default": false,
-          "category": "alerts",
-          "group": "low"
-        },
-        {
-          "name": "warning_low_threshold",
-          "label": "Threshold",
-          "type": "stepper",
-          "default": 0,
-          "category": "alerts",
-          "group": "low",
-          "min": -99999,
-          "max": 99999,
-          "enabled_by": "warning_low_enabled"
-        },
-        {
-          "name": "warning_low_color",
-          "label": "Low Color",
-          "type": "color",
-          "default": "#0000FF",
-          "category": "alerts",
-          "group": "low"
-        },
-        {
-          "name": "warning_low_apply_label",
-          "label": "Title",
-          "type": "checkbox",
-          "default": true,
-          "category": "alerts",
-          "group": "low",
-          "inline": "warning_low_apply"
-        },
-        {
-          "name": "warning_low_apply_value",
-          "label": "Value",
-          "type": "checkbox",
-          "default": true,
-          "category": "alerts",
-          "group": "low",
-          "inline": "warning_low_apply"
-        },
-        {
-          "name": "warning_low_apply_panel",
-          "label": "Border",
-          "type": "checkbox",
-          "default": false,
-          "category": "alerts",
-          "group": "low",
-          "inline": "warning_low_apply"
+          "group": "Value",
+          "help": "How many digits after the decimal point to show."
         },
         {
           "name": "label_font",
           "label": "Label Font",
           "type": "font",
           "default": "",
-          "category": "appearance"
-        },
-        {
-          "name": "value_font",
-          "label": "Value Font",
-          "type": "font",
-          "default": "",
-          "category": "appearance"
-        },
-        {
-          "name": "border_radius",
-          "label": "Border Radius",
-          "type": "stepper",
-          "default": 7,
           "category": "appearance",
-          "min": 0,
-          "max": 100
-        },
-        {
-          "name": "border_width",
-          "label": "Border Width",
-          "type": "stepper",
-          "default": 3,
-          "category": "appearance",
-          "min": 0,
-          "max": 20
-        },
-        {
-          "name": "border_color",
-          "label": "Border Color",
-          "type": "color",
-          "default": "#2E2F2E",
-          "category": "appearance",
-          "night_overridable": true
-        },
-        {
-          "name": "bg_color",
-          "label": "Background",
-          "type": "color",
-          "default": "#000000",
-          "category": "appearance",
-          "night_overridable": true
-        },
-        {
-          "name": "bg_opa",
-          "label": "BG Opacity",
-          "type": "stepper",
-          "default": 255,
-          "category": "appearance",
-          "min": 0,
-          "max": 255
+          "group": "Text",
+          "help": "Text style and size of the title."
         },
         {
           "name": "label_color",
@@ -389,7 +241,18 @@
           "type": "color",
           "default": "#FFFFFF",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Text",
+          "help": "Colour of the title."
+        },
+        {
+          "name": "value_font",
+          "label": "Value Font",
+          "type": "font",
+          "default": "",
+          "category": "appearance",
+          "group": "Text",
+          "help": "Text style and size of the number."
         },
         {
           "name": "value_color",
@@ -397,25 +260,9 @@
           "type": "color",
           "default": "#FFFFFF",
           "category": "appearance",
-          "night_overridable": true
-        },
-        {
-          "name": "label_y_offset",
-          "label": "Label Y Offset",
-          "type": "stepper",
-          "default": -28,
-          "category": "appearance",
-          "min": -100,
-          "max": 100
-        },
-        {
-          "name": "value_y_offset",
-          "label": "Value Y Offset",
-          "type": "stepper",
-          "default": 9,
-          "category": "appearance",
-          "min": -100,
-          "max": 100
+          "night_overridable": true,
+          "group": "Text",
+          "help": "Colour of the number."
         },
         {
           "name": "text_align",
@@ -424,48 +271,116 @@
           "default": 1,
           "category": "appearance",
           "options": [
-            {
-              "value": 0,
-              "label": "Left"
-            },
-            {
-              "value": 1,
-              "label": "Center"
-            },
-            {
-              "value": 2,
-              "label": "Right"
-            }
-          ]
+            { "value": 0, "label": "Left" },
+            { "value": 1, "label": "Center" },
+            { "value": 2, "label": "Right" }
+          ],
+          "group": "Text",
+          "help": "Line the text up to the left, centre or right."
+        },
+        {
+          "name": "label_y_offset",
+          "label": "Label Y Offset",
+          "type": "stepper",
+          "default": -28,
+          "category": "appearance",
+          "min": -100,
+          "max": 100,
+          "group": "Text",
+          "help": "Nudge the title up or down."
+        },
+        {
+          "name": "value_y_offset",
+          "label": "Value Y Offset",
+          "type": "stepper",
+          "default": 9,
+          "category": "appearance",
+          "min": -100,
+          "max": 100,
+          "group": "Text",
+          "help": "Nudge the number up or down."
+        },
+        {
+          "name": "show_peak",
+          "label": "Peak Hold",
+          "type": "select",
+          "default": 0,
+          "category": "appearance",
+          "options": [
+            { "value": 0, "label": "Off" },
+            { "value": 1, "label": "Max" },
+            { "value": 2, "label": "Min" },
+            { "value": 3, "label": "Min/Max" }
+          ],
+          "group": "Text",
+          "help": "Also show the highest (or lowest) reading reached, held on screen."
+        },
+        {
+          "name": "peak_font",
+          "label": "Peak Font",
+          "type": "font",
+          "default": "",
+          "category": "appearance",
+          "enabled_by": "show_peak",
+          "group": "Text",
+          "help": "Text style and size of the held reading."
+        },
+        {
+          "name": "peak_x_offset",
+          "label": "Peak X Offset",
+          "type": "stepper",
+          "default": 0,
+          "category": "appearance",
+          "min": -100,
+          "max": 100,
+          "enabled_by": "show_peak",
+          "group": "Text",
+          "help": "Nudge the held reading left or right."
+        },
+        {
+          "name": "peak_y_offset",
+          "label": "Peak Y Offset",
+          "type": "stepper",
+          "default": 31,
+          "category": "appearance",
+          "min": -100,
+          "max": 100,
+          "enabled_by": "show_peak",
+          "group": "Text",
+          "help": "Nudge the held reading up or down."
         },
         {
           "name": "show_unit",
           "label": "Show Unit Suffix",
           "type": "checkbox",
           "default": false,
-          "category": "data"
+          "category": "appearance",
+          "group": "Text",
+          "help": "Add the unit after the number, like °C or PSI."
         },
         {
           "name": "unit_size",
           "label": "Unit Size",
           "type": "select",
           "default": 2,
-          "category": "data",
+          "category": "appearance",
           "options": [
-            {
-              "value": 0,
-              "label": "Small"
-            },
-            {
-              "value": 1,
-              "label": "Medium"
-            },
-            {
-              "value": 2,
-              "label": "Full"
-            }
+            { "value": 0, "label": "Small" },
+            { "value": 1, "label": "Medium" },
+            { "value": 2, "label": "Full" }
           ],
-          "enabled_by": "show_unit"
+          "enabled_by": "show_unit",
+          "group": "Text",
+          "help": "How big the unit is next to the number."
+        },
+        {
+          "name": "custom_text",
+          "label": "Unit Text",
+          "type": "text",
+          "default": "",
+          "category": "appearance",
+          "group": "Text",
+          "help": "Replace the unit with your own text."
         },
         {
           "name": "custom_text_x_offset",
@@ -474,7 +389,9 @@
           "default": 41,
           "category": "appearance",
           "min": -100,
-          "max": 100
+          "max": 100,
+          "group": "Text",
+          "help": "Nudge that text left or right."
         },
         {
           "name": "custom_text_y_offset",
@@ -483,7 +400,190 @@
           "default": 32,
           "category": "appearance",
           "min": -100,
-          "max": 100
+          "max": 100,
+          "group": "Text",
+          "help": "Nudge that text up or down."
+        },
+        {
+          "name": "bg_color",
+          "label": "Background",
+          "type": "color",
+          "default": "#000000",
+          "category": "appearance",
+          "night_overridable": true,
+          "group": "Frame",
+          "help": "Background colour of the panel."
+        },
+        {
+          "name": "bg_opa",
+          "label": "BG Opacity",
+          "type": "stepper",
+          "default": 255,
+          "category": "appearance",
+          "min": 0,
+          "max": 255,
+          "group": "Frame",
+          "help": "How solid the background is (0 = see-through, 255 = solid)."
+        },
+        {
+          "name": "border_color",
+          "label": "Border Color",
+          "type": "color",
+          "default": "#2E2F2E",
+          "category": "appearance",
+          "night_overridable": true,
+          "group": "Frame",
+          "help": "Colour of the outline."
+        },
+        {
+          "name": "border_width",
+          "label": "Border Width",
+          "type": "stepper",
+          "default": 3,
+          "category": "appearance",
+          "min": 0,
+          "max": 20,
+          "group": "Frame",
+          "help": "Thickness of the outline (0 = none)."
+        },
+        {
+          "name": "border_radius",
+          "label": "Border Radius",
+          "type": "stepper",
+          "default": 7,
+          "category": "appearance",
+          "min": 0,
+          "max": 100,
+          "group": "Frame",
+          "help": "How rounded the corners are."
+        },
+        {
+          "name": "warning_low_enabled",
+          "label": "Low Alert",
+          "type": "checkbox",
+          "default": false,
+          "category": "alerts",
+          "group": "Alerts",
+          "help": "Warn when the reading drops too low."
+        },
+        {
+          "name": "warning_low_threshold",
+          "label": "Threshold",
+          "type": "number",
+          "default": 0,
+          "category": "alerts",
+          "group": "Alerts",
+          "min": -99999,
+          "max": 99999,
+          "enabled_by": "warning_low_enabled",
+          "help": "Warn once the reading falls to or below this."
+        },
+        {
+          "name": "warning_low_color",
+          "label": "Low Color",
+          "type": "color",
+          "default": "#0000FF",
+          "category": "alerts",
+          "group": "Alerts",
+          "help": "The alert colour used when it's too low.",
+          "enabled_by": "warning_low_enabled"
+        },
+        {
+          "name": "warning_low_apply_label",
+          "label": "Title",
+          "type": "checkbox",
+          "default": true,
+          "category": "alerts",
+          "group": "Alerts",
+          "inline": "warning_low_apply",
+          "help": "Turn the title the alert colour when it's too low.",
+          "enabled_by": "warning_low_enabled"
+        },
+        {
+          "name": "warning_low_apply_value",
+          "label": "Value",
+          "type": "checkbox",
+          "default": true,
+          "category": "alerts",
+          "group": "Alerts",
+          "inline": "warning_low_apply",
+          "help": "Turn the number the alert colour when it's too low.",
+          "enabled_by": "warning_low_enabled"
+        },
+        {
+          "name": "warning_low_apply_panel",
+          "label": "Border",
+          "type": "checkbox",
+          "default": false,
+          "category": "alerts",
+          "group": "Alerts",
+          "inline": "warning_low_apply",
+          "help": "Turn the panel's edge/background the alert colour when it's too low.",
+          "enabled_by": "warning_low_enabled"
+        },
+        {
+          "name": "warning_high_enabled",
+          "label": "High Alert",
+          "type": "checkbox",
+          "default": false,
+          "category": "alerts",
+          "group": "Alerts",
+          "help": "Warn when the reading climbs too high."
+        },
+        {
+          "name": "warning_high_threshold",
+          "label": "Threshold",
+          "type": "number",
+          "default": 0,
+          "category": "alerts",
+          "group": "Alerts",
+          "min": -99999,
+          "max": 99999,
+          "enabled_by": "warning_high_enabled",
+          "help": "Warn once the reading rises to or above this."
+        },
+        {
+          "name": "warning_high_color",
+          "label": "High Color",
+          "type": "color",
+          "default": "#FF0000",
+          "category": "alerts",
+          "group": "Alerts",
+          "help": "The alert colour used when it's too high.",
+          "enabled_by": "warning_high_enabled"
+        },
+        {
+          "name": "warning_high_apply_label",
+          "label": "Title",
+          "type": "checkbox",
+          "default": true,
+          "category": "alerts",
+          "group": "Alerts",
+          "inline": "warning_high_apply",
+          "help": "Turn the title the alert colour when it's too high.",
+          "enabled_by": "warning_high_enabled"
+        },
+        {
+          "name": "warning_high_apply_value",
+          "label": "Value",
+          "type": "checkbox",
+          "default": true,
+          "category": "alerts",
+          "group": "Alerts",
+          "inline": "warning_high_apply",
+          "help": "Turn the number the alert colour when it's too high.",
+          "enabled_by": "warning_high_enabled"
+        },
+        {
+          "name": "warning_high_apply_panel",
+          "label": "Border",
+          "type": "checkbox",
+          "default": false,
+          "category": "alerts",
+          "group": "Alerts",
+          "inline": "warning_high_apply",
+          "help": "Turn the panel's edge/background the alert colour when it's too high.",
+          "enabled_by": "warning_high_enabled"
         }
       ]
     },
@@ -508,35 +608,36 @@
           "label": "Label",
           "type": "text",
           "default": "",
-          "category": "data"
+          "category": "data",
+          "group": "Value",
+          "help": "Text shown with the bar."
         },
         {
           "name": "bar_min",
           "label": "Min Value",
           "type": "number",
           "default": 0,
-          "category": "data"
+          "category": "data",
+          "group": "Value",
+          "help": "The reading at the empty end of the bar."
         },
         {
           "name": "bar_max",
           "label": "Max Value",
           "type": "number",
           "default": 100,
-          "category": "data"
-        },
-        {
-          "name": "show_bar_value",
-          "label": "Show Value",
-          "type": "checkbox",
-          "default": false,
-          "category": "data"
+          "category": "data",
+          "group": "Value",
+          "help": "The reading at the full end of the bar."
         },
         {
           "name": "decimals",
           "label": "Decimals",
           "type": "number",
           "default": 0,
-          "category": "data"
+          "category": "data",
+          "group": "Value",
+          "help": "How many digits after the decimal point to show."
         },
         {
           "name": "anchor_enabled",
@@ -544,7 +645,9 @@
           "type": "checkbox",
           "default": false,
           "category": "data",
-          "_doc": "Anchor-based non-linear scale. \"Pin THIS data value to\nTHIS position on the bar\" - splits the range into two\nlinear segments. e.g. coolant 0-110, anchor=90,\nposition=50 makes 0-90 cover the first half, 90-110\ncover the second half. anchor_enabled=false (default)\n= pure linear."
+          "_doc": "Anchor-based non-linear scale. \"Pin THIS data value to\nTHIS position on the bar\" - splits the range into two\nlinear segments. e.g. coolant 0-110, anchor=90,\nposition=50 makes 0-90 cover the first half, 90-110\ncover the second half. anchor_enabled=false (default)\n= pure linear.",
+          "group": "Value",
+          "help": "Pin a chosen reading to a fixed spot on the bar instead of filling from the end. e.g. put your normal operating temperature in the middle, so anything hotter or colder is obvious at a glance."
         },
         {
           "name": "anchor_value",
@@ -552,7 +655,9 @@
           "type": "number",
           "default": 50,
           "category": "data",
-          "enabled_by": "anchor_enabled"
+          "enabled_by": "anchor_enabled",
+          "group": "Value",
+          "help": "The reading you want pinned in place - e.g. 90 for your normal coolant temp."
         },
         {
           "name": "anchor_position",
@@ -562,21 +667,63 @@
           "category": "data",
           "min": 0,
           "max": 100,
-          "enabled_by": "anchor_enabled"
+          "enabled_by": "anchor_enabled",
+          "group": "Value",
+          "help": "Where that reading sits along the bar (50 = middle, 0 = start, 100 = end)."
+        },
+        {
+          "name": "show_bar_value",
+          "label": "Show Value",
+          "type": "checkbox",
+          "default": false,
+          "category": "data",
+          "group": "Value",
+          "help": "Show the number on the bar."
+        },
+        {
+          "name": "smoothing_ms",
+          "label": "Smoothing (ms)",
+          "type": "slider",
+          "default": 40,
+          "category": "data",
+          "min": 0,
+          "max": 300,
+          "step": 10,
+          "group": "Behaviour",
+          "help": "Smooths out jumpy readings. Higher is smoother but slower to react; 0 shows the raw value."
         },
         {
           "name": "invert_bar_value",
           "label": "Invert Fill",
           "type": "checkbox",
           "default": false,
-          "category": "appearance"
+          "category": "appearance",
+          "group": "Fill",
+          "help": "Flip it so a high reading empties the bar instead of filling it."
         },
         {
           "name": "center_fill",
           "label": "Center Fill (±)",
           "type": "checkbox",
           "default": false,
-          "category": "appearance"
+          "category": "appearance",
+          "group": "Fill",
+          "help": "Fill out from the middle of the bar in both directions."
+        },
+        {
+          "name": "fill_dir",
+          "label": "Fill Direction",
+          "type": "select",
+          "default": 0,
+          "category": "appearance",
+          "options": [
+            { "value": 0, "label": "Left to Right" },
+            { "value": 1, "label": "Right to Left" },
+            { "value": 2, "label": "Center Out" },
+            { "value": 3, "label": "Edges In" }
+          ],
+          "group": "Fill",
+          "help": "Which way the bar fills (left, right, up or down)."
         },
         {
           "name": "bar_in_range_color",
@@ -584,55 +731,40 @@
           "type": "color",
           "default": "#00FF00",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Fill",
+          "help": "Colour of the bar."
         },
         {
-          "name": "label_font",
-          "label": "Label Font",
-          "type": "font",
+          "name": "bar_image_full",
+          "label": "Fill Image",
+          "type": "image_picker",
           "default": "",
-          "category": "appearance"
-        },
-        {
-          "name": "value_font",
-          "label": "Value Font",
-          "type": "font",
-          "default": "",
-          "category": "appearance"
-        },
-        {
-          "name": "bar_bg_color",
-          "label": "Track Color",
-          "type": "color",
-          "default": "#2E2F2E",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Fill",
+          "help": "Use a picture for the filled part instead of a plain colour."
         },
         {
-          "name": "bar_radius",
-          "label": "Bar Radius",
+          "name": "fill_edge_width",
+          "label": "Leading Edge Width",
           "type": "stepper",
-          "default": 5,
-          "category": "appearance",
+          "default": 0,
           "min": 0,
-          "max": 50
+          "max": 20,
+          "category": "appearance",
+          "help": "How wide the bright tip at the current reading is (0 = off).",
+          "group": "Fill"
         },
         {
-          "name": "bar_border_width",
-          "label": "Border Width",
-          "type": "stepper",
-          "default": 2,
-          "category": "appearance",
-          "min": 0,
-          "max": 20
-        },
-        {
-          "name": "bar_border_color",
-          "label": "Border Color",
+          "name": "fill_edge_color",
+          "label": "Leading Edge Color",
           "type": "color",
-          "default": "#2E2F2E",
+          "default": "#FFFFFF",
           "category": "appearance",
-          "night_overridable": true
+          "enabled_by": "fill_edge_width",
+          "group": "Fill",
+          "help": "Colour of the bright tip that sits at the current reading."
         },
         {
           "name": "indicator_radius",
@@ -641,23 +773,19 @@
           "default": 5,
           "category": "appearance",
           "min": 0,
-          "max": 50
+          "max": 50,
+          "group": "Fill",
+          "help": "How rounded the filled part's corners are."
         },
         {
-          "name": "label_color",
-          "label": "Label Color",
+          "name": "bar_bg_color",
+          "label": "Track Color",
           "type": "color",
-          "default": "#FFFFFF",
+          "default": "#2E2F2E",
           "category": "appearance",
-          "night_overridable": true
-        },
-        {
-          "name": "value_color",
-          "label": "Value Color",
-          "type": "color",
-          "default": "#FFFFFF",
-          "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Frame",
+          "help": "Colour of the empty part behind the fill."
         },
         {
           "name": "bar_image",
@@ -665,111 +793,88 @@
           "type": "image_picker",
           "default": "",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Frame",
+          "help": "Use a picture for the empty background instead of a plain colour."
         },
         {
-          "name": "bar_image_full",
-          "label": "Fill Image",
-          "type": "image_picker",
+          "name": "bar_radius",
+          "label": "Bar Radius",
+          "type": "stepper",
+          "default": 5,
+          "category": "appearance",
+          "min": 0,
+          "max": 50,
+          "group": "Frame",
+          "help": "How rounded the whole bar's corners are."
+        },
+        {
+          "name": "bar_border_width",
+          "label": "Border Width",
+          "type": "stepper",
+          "default": 2,
+          "category": "appearance",
+          "min": 0,
+          "max": 20,
+          "group": "Frame",
+          "help": "Thickness of the outline (0 = none)."
+        },
+        {
+          "name": "bar_border_color",
+          "label": "Border Color",
+          "type": "color",
+          "default": "#2E2F2E",
+          "category": "appearance",
+          "night_overridable": true,
+          "group": "Frame",
+          "help": "Colour of the outline."
+        },
+        {
+          "name": "label_font",
+          "label": "Label Font",
+          "type": "font",
           "default": "",
           "category": "appearance",
-          "night_overridable": true
+          "group": "Text",
+          "help": "Text style and size of the label."
         },
         {
-          "name": "bar_alerts_enabled",
-          "label": "Color Alerts",
-          "type": "checkbox",
-          "default": false,
-          "category": "alerts",
-          "group": "bar_alerts"
-        },
-        {
-          "name": "bar_low",
-          "label": "Low Threshold",
-          "type": "stepper",
-          "default": 0,
-          "category": "alerts",
-          "group": "bar_alerts",
-          "min": -99999,
-          "max": 99999,
-          "enabled_by": "bar_alerts_enabled"
-        },
-        {
-          "name": "bar_low_color",
-          "label": "Low Color",
+          "name": "label_color",
+          "label": "Label Color",
           "type": "color",
-          "default": "#0000FF",
-          "category": "alerts",
-          "group": "bar_alerts",
-          "enabled_by": "bar_alerts_enabled",
-          "night_overridable": true
+          "default": "#FFFFFF",
+          "category": "appearance",
+          "night_overridable": true,
+          "group": "Text",
+          "help": "Colour of the label."
         },
         {
-          "name": "bar_high",
-          "label": "High Threshold",
-          "type": "stepper",
-          "default": 100,
-          "category": "alerts",
-          "group": "bar_alerts",
-          "min": -99999,
-          "max": 99999,
-          "enabled_by": "bar_alerts_enabled"
+          "name": "value_font",
+          "label": "Value Font",
+          "type": "font",
+          "default": "",
+          "category": "appearance",
+          "group": "Text",
+          "help": "Text style and size of the number."
         },
         {
-          "name": "bar_high_color",
-          "label": "High Color",
+          "name": "value_color",
+          "label": "Value Color",
           "type": "color",
-          "default": "#FF0000",
-          "category": "alerts",
-          "group": "bar_alerts",
-          "enabled_by": "bar_alerts_enabled",
-          "night_overridable": true
+          "default": "#FFFFFF",
+          "category": "appearance",
+          "night_overridable": true,
+          "group": "Text",
+          "help": "Colour of the number."
         },
         {
           "name": "show_ticks",
           "label": "Show Ticks",
           "type": "checkbox",
           "default": false,
-          "category": "appearance"
-        },
-        {
-          "name": "tick_count",
-          "label": "Tick Count",
-          "type": "stepper",
-          "default": 5,
           "category": "appearance",
-          "min": 2,
-          "max": 30,
-          "enabled_by": "show_ticks"
-        },
-        {
-          "name": "tick_length",
-          "label": "Tick Length",
-          "type": "stepper",
-          "default": 6,
-          "category": "appearance",
-          "min": 1,
-          "max": 40,
-          "enabled_by": "show_ticks"
-        },
-        {
-          "name": "tick_width",
-          "label": "Tick Width",
-          "type": "stepper",
-          "default": 2,
-          "category": "appearance",
-          "min": 1,
-          "max": 10,
-          "enabled_by": "show_ticks"
-        },
-        {
-          "name": "tick_color",
-          "label": "Tick Color",
-          "type": "color",
-          "default": "#E8E8E8",
-          "category": "appearance",
-          "night_overridable": true,
-          "enabled_by": "show_ticks"
+          "group": "Ticks",
+          "help": "Show marks along the bar, like the lines on a fuel gauge."
         },
         {
           "name": "tick_side",
@@ -779,19 +884,114 @@
           "category": "appearance",
           "enabled_by": "show_ticks",
           "options": [
-            {
-              "value": 0,
-              "label": "Top"
-            },
-            {
-              "value": 1,
-              "label": "Bottom"
-            },
-            {
-              "value": 2,
-              "label": "Both"
-            }
-          ]
+            { "value": 0, "label": "Top" },
+            { "value": 1, "label": "Bottom" },
+            { "value": 2, "label": "Both" }
+          ],
+          "group": "Ticks",
+          "help": "Which side of the bar the marks sit on."
+        },
+        {
+          "name": "tick_count",
+          "label": "Tick Count",
+          "type": "stepper",
+          "default": 5,
+          "category": "appearance",
+          "min": 2,
+          "max": 30,
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "How many marks to show along the bar."
+        },
+        {
+          "name": "tick_width",
+          "label": "Tick Width",
+          "type": "stepper",
+          "default": 2,
+          "category": "appearance",
+          "min": 1,
+          "max": 10,
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "How thick the marks are."
+        },
+        {
+          "name": "tick_length",
+          "label": "Tick Length",
+          "type": "stepper",
+          "default": 6,
+          "category": "appearance",
+          "min": 1,
+          "max": 40,
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "How long the marks are."
+        },
+        {
+          "name": "tick_color",
+          "label": "Tick Color",
+          "type": "color",
+          "default": "#E8E8E8",
+          "category": "appearance",
+          "night_overridable": true,
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "Colour of the marks."
+        },
+        {
+          "name": "bar_alerts_enabled",
+          "label": "Color Alerts",
+          "type": "checkbox",
+          "default": false,
+          "category": "alerts",
+          "group": "Alerts",
+          "help": "Change the bar colour when the reading goes too low or too high (set the points below)."
+        },
+        {
+          "name": "bar_low",
+          "label": "Low Threshold",
+          "type": "number",
+          "default": 0,
+          "category": "alerts",
+          "group": "Alerts",
+          "min": -99999,
+          "max": 99999,
+          "enabled_by": "bar_alerts_enabled",
+          "help": "At or below this reading, the bar turns the Low colour."
+        },
+        {
+          "name": "bar_low_color",
+          "label": "Low Color",
+          "type": "color",
+          "default": "#0000FF",
+          "category": "alerts",
+          "group": "Alerts",
+          "enabled_by": "bar_alerts_enabled",
+          "night_overridable": true,
+          "help": "Bar colour when the reading is low."
+        },
+        {
+          "name": "bar_high",
+          "label": "High Threshold",
+          "type": "number",
+          "default": 100,
+          "category": "alerts",
+          "group": "Alerts",
+          "min": -99999,
+          "max": 99999,
+          "enabled_by": "bar_alerts_enabled",
+          "help": "At or above this reading, the bar turns the High colour."
+        },
+        {
+          "name": "bar_high_color",
+          "label": "High Color",
+          "type": "color",
+          "default": "#FF0000",
+          "category": "alerts",
+          "group": "Alerts",
+          "enabled_by": "bar_alerts_enabled",
+          "night_overridable": true,
+          "help": "Bar colour when the reading is high."
         }
       ]
     },
@@ -818,15 +1018,11 @@
           "default": 0,
           "category": "data",
           "options": [
-            {
-              "value": 0,
-              "label": "Left"
-            },
-            {
-              "value": 1,
-              "label": "Right"
-            }
-          ]
+            { "value": 0, "label": "Left" },
+            { "value": 1, "label": "Right" }
+          ],
+          "group": "Value",
+          "help": "Which side of the screen this light sits on."
         },
         {
           "name": "input_source",
@@ -835,29 +1031,11 @@
           "default": 0,
           "category": "data",
           "options": [
-            {
-              "value": 0,
-              "label": "Wire"
-            },
-            {
-              "value": 1,
-              "label": "CAN"
-            }
-          ]
-        },
-        {
-          "name": "animation",
-          "label": "Anim Enabled",
-          "type": "checkbox",
-          "default": true,
-          "category": "appearance"
-        },
-        {
-          "name": "is_momentary",
-          "label": "Momentary",
-          "type": "checkbox",
-          "default": false,
-          "category": "appearance"
+            { "value": 0, "label": "Wire" },
+            { "value": 1, "label": "CAN" }
+          ],
+          "group": "Value",
+          "help": "What turns the light on - a sensor reading or a built-in source."
         },
         {
           "name": "color_on",
@@ -865,7 +1043,9 @@
           "type": "color",
           "default": "#FFBF00",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Fill",
+          "help": "Colour when the light is on."
         },
         {
           "name": "opa_on",
@@ -874,7 +1054,9 @@
           "default": 255,
           "category": "appearance",
           "min": 0,
-          "max": 255
+          "max": 255,
+          "group": "Fill",
+          "help": "How bright it is when on (0-255)."
         },
         {
           "name": "color_off",
@@ -882,7 +1064,9 @@
           "type": "color",
           "default": "#333333",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Fill",
+          "help": "Colour when the light is off."
         },
         {
           "name": "opa_off",
@@ -891,7 +1075,27 @@
           "default": 70,
           "category": "appearance",
           "min": 0,
-          "max": 255
+          "max": 255,
+          "group": "Fill",
+          "help": "How bright it is when off (0-255)."
+        },
+        {
+          "name": "animation",
+          "label": "Anim Enabled",
+          "type": "checkbox",
+          "default": true,
+          "category": "data",
+          "group": "Behaviour",
+          "help": "Fade smoothly between on and off."
+        },
+        {
+          "name": "is_momentary",
+          "label": "Momentary",
+          "type": "checkbox",
+          "default": false,
+          "category": "data",
+          "group": "Behaviour",
+          "help": "Only stay on while the signal is active, instead of latching on."
         }
       ]
     },
@@ -916,15 +1120,9 @@
           "label": "Label",
           "type": "text",
           "default": "",
-          "category": "data"
-        },
-        {
-          "name": "image_name",
-          "label": "Image",
-          "type": "image_picker",
-          "default": "",
-          "category": "appearance",
-          "night_overridable": true
+          "category": "data",
+          "group": "Value",
+          "help": "Text shown on the tile."
         },
         {
           "name": "active_color",
@@ -932,7 +1130,9 @@
           "type": "color",
           "default": "#FF0000",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Fill",
+          "help": "Tile colour when the warning is on."
         },
         {
           "name": "active_opa",
@@ -941,21 +1141,9 @@
           "default": 255,
           "category": "appearance",
           "min": 0,
-          "max": 255
-        },
-        {
-          "name": "is_momentary",
-          "label": "Momentary",
-          "type": "checkbox",
-          "default": true,
-          "category": "appearance"
-        },
-        {
-          "name": "invert_toggle",
-          "label": "Invert State",
-          "type": "checkbox",
-          "default": false,
-          "category": "appearance"
+          "max": 255,
+          "group": "Fill",
+          "help": "How solid the tile is when on (0-255)."
         },
         {
           "name": "inactive_color",
@@ -963,7 +1151,9 @@
           "type": "color",
           "default": "#292C29",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Fill",
+          "help": "Tile colour when off."
         },
         {
           "name": "inactive_opa",
@@ -972,25 +1162,9 @@
           "default": 180,
           "category": "appearance",
           "min": 0,
-          "max": 255
-        },
-        {
-          "name": "border_width",
-          "label": "Border Width",
-          "type": "stepper",
-          "default": 0,
-          "category": "appearance",
-          "min": 0,
-          "max": 20
-        },
-        {
-          "name": "border_color_style",
-          "label": "Border Color",
-          "type": "color",
-          "default": "#000000",
-          "category": "appearance",
-          "night_overridable": true,
-          "night_key": "border_color"
+          "max": 255,
+          "group": "Fill",
+          "help": "How solid the tile is when off (0-255)."
         },
         {
           "name": "radius",
@@ -999,14 +1173,62 @@
           "default": 100,
           "category": "appearance",
           "min": 0,
-          "max": 200
+          "max": 200,
+          "group": "Frame",
+          "help": "How rounded the tile's corners are."
+        },
+        {
+          "name": "border_width",
+          "label": "Border Width",
+          "type": "stepper",
+          "default": 0,
+          "category": "appearance",
+          "min": 0,
+          "max": 20,
+          "group": "Frame",
+          "help": "Thickness of the outline (0 = none)."
+        },
+        {
+          "name": "border_color_style",
+          "label": "Border Color",
+          "type": "color",
+          "default": "#000000",
+          "category": "appearance",
+          "night_overridable": true,
+          "night_key": "border_color",
+          "group": "Frame",
+          "help": "Colour of the outline."
+        },
+        {
+          "name": "image_name",
+          "label": "Image",
+          "type": "image_picker",
+          "default": "",
+          "category": "appearance",
+          "night_overridable": true,
+          "group": "Image",
+          "help": "Icon shown on the tile."
+        },
+        {
+          "name": "image_scale",
+          "label": "Image Scale %",
+          "type": "stepper",
+          "default": 100,
+          "category": "appearance",
+          "min": 10,
+          "max": 200,
+          "_doc": "Zoom for the alert image (100 = native), centred on the widget.\nOnly applies in image mode (ignored for the plain circle lamp).",
+          "group": "Image",
+          "help": "Resize the icon, as a percentage."
         },
         {
           "name": "show_label",
           "label": "Show Label",
           "type": "checkbox",
           "default": true,
-          "category": "appearance"
+          "category": "appearance",
+          "group": "Text",
+          "help": "Show the text on the tile."
         },
         {
           "name": "label_color",
@@ -1015,7 +1237,9 @@
           "default": "#FFFFFF",
           "category": "appearance",
           "night_overridable": true,
-          "enabled_by": "show_label"
+          "enabled_by": "show_label",
+          "group": "Text",
+          "help": "Text colour."
         },
         {
           "name": "label_font",
@@ -1023,17 +1247,21 @@
           "type": "font",
           "default": "",
           "category": "appearance",
-          "enabled_by": "show_label"
+          "enabled_by": "show_label",
+          "group": "Text",
+          "help": "Text style and size."
         },
         {
           "name": "label_y_offset",
           "label": "Label Y Offset",
-          "type": "slider",
+          "type": "stepper",
           "default": 0,
           "category": "appearance",
           "min": -100,
           "max": 100,
-          "enabled_by": "show_label"
+          "enabled_by": "show_label",
+          "group": "Text",
+          "help": "Nudge the text up or down."
         },
         {
           "name": "label_text_align",
@@ -1043,19 +1271,30 @@
           "category": "appearance",
           "enabled_by": "show_label",
           "options": [
-            {
-              "value": 0,
-              "label": "Left"
-            },
-            {
-              "value": 1,
-              "label": "Center"
-            },
-            {
-              "value": 2,
-              "label": "Right"
-            }
-          ]
+            { "value": 0, "label": "Left" },
+            { "value": 1, "label": "Center" },
+            { "value": 2, "label": "Right" }
+          ],
+          "group": "Text",
+          "help": "Line the text up left, centre or right."
+        },
+        {
+          "name": "is_momentary",
+          "label": "Momentary",
+          "type": "checkbox",
+          "default": true,
+          "category": "appearance",
+          "group": "Behaviour",
+          "help": "Only stay on while the signal is active, instead of latching on."
+        },
+        {
+          "name": "invert_toggle",
+          "label": "Invert State",
+          "type": "checkbox",
+          "default": false,
+          "category": "appearance",
+          "group": "Behaviour",
+          "help": "Flip it - the warning shows when the signal is OFF."
         }
       ]
     },
@@ -1080,14 +1319,37 @@
           "label": "Static Text",
           "type": "text",
           "default": "",
-          "category": "data"
+          "category": "data",
+          "group": "Value",
+          "help": "Type fixed text to show. Leave blank to show the live reading instead."
         },
         {
           "name": "decimals",
           "label": "Decimals",
           "type": "number",
           "default": 0,
-          "category": "data"
+          "category": "data",
+          "group": "Value",
+          "help": "How many digits after the decimal point when showing a reading."
+        },
+        {
+          "name": "font",
+          "label": "Font",
+          "type": "font",
+          "default": "",
+          "category": "appearance",
+          "group": "Text",
+          "help": "Text style and size."
+        },
+        {
+          "name": "text_color",
+          "label": "Text Color",
+          "type": "color",
+          "default": "#FFFFFF",
+          "category": "appearance",
+          "night_overridable": true,
+          "group": "Text",
+          "help": "Text colour."
         },
         {
           "name": "rotation",
@@ -1096,22 +1358,9 @@
           "default": 0,
           "category": "appearance",
           "min": 0,
-          "max": 359
-        },
-        {
-          "name": "font",
-          "label": "Font",
-          "type": "font",
-          "default": "",
-          "category": "appearance"
-        },
-        {
-          "name": "text_color",
-          "label": "Text Color",
-          "type": "color",
-          "default": "#FFFFFF",
-          "category": "appearance",
-          "night_overridable": true
+          "max": 359,
+          "group": "Behaviour",
+          "help": "Turn the text on an angle, in degrees."
         }
       ]
     },
@@ -1136,14 +1385,18 @@
           "label": "Min Value",
           "type": "number",
           "default": 0,
-          "category": "data"
+          "category": "data",
+          "group": "Value",
+          "help": "The reading at the start of the dial."
         },
         {
           "name": "max",
           "label": "Max Value",
           "type": "number",
           "default": 100,
-          "category": "data"
+          "category": "data",
+          "group": "Value",
+          "help": "The reading at the end of the dial."
         },
         {
           "name": "start_angle_user",
@@ -1154,39 +1407,30 @@
           "min": 0,
           "max": 359,
           "step": 5,
-          "_doc": "User-coord start angle: 0° = 12 o'clock, CW positive.\n_meterSyncDerived translates this into the LVGL\nstart_angle/end_angle pair the firmware reads."
+          "_doc": "User-coord start angle: 0° = 12 o'clock, CW positive.\n_meterSyncDerived translates this into the LVGL\nstart_angle/end_angle pair the firmware reads.",
+          "group": "Value",
+          "help": "Where the dial starts, as a clock position in degrees (0 = 3 o'clock, going clockwise)."
         },
         {
           "name": "sweep_degrees",
           "label": "Sweep",
-          "type": "slider",
+          "type": "stepper",
           "default": 270,
           "category": "data",
           "min": 30,
           "max": 360,
-          "step": 5
+          "step": 5,
+          "group": "Value",
+          "help": "How far around the dial goes. 270 is a normal gauge; 360 is a full circle."
         },
         {
           "name": "reverse",
           "label": "Reverse Direction",
           "type": "checkbox",
           "default": false,
-          "category": "data"
-        },
-        {
-          "name": "minor_tick_step",
-          "label": "Minor Tick Value Spacing",
-          "type": "number",
-          "default": 10,
           "category": "data",
-          "_doc": "auto_ticks lives in w.config but is NOT in the inspector\n- see _meterSyncDerived. Min/Major Tick Spacing replace\nthe old count-based fields."
-        },
-        {
-          "name": "major_tick_step",
-          "label": "Major Tick Value Spacing",
-          "type": "number",
-          "default": 50,
-          "category": "data"
+          "group": "Value",
+          "help": "Run the dial backwards, so the high reading sits at the start."
         },
         {
           "name": "anchor_enabled",
@@ -1194,7 +1438,9 @@
           "type": "checkbox",
           "default": false,
           "category": "data",
-          "_doc": "Anchor-based non-linear scale. \"Pin THIS data value\nto THIS position on the sweep\" - splits the range into\ntwo linear segments. e.g. anchor=90, position=50 makes\n0-90 cover the first half of the sweep, 90-max the\nsecond half. anchor_enabled=false (default) = linear."
+          "_doc": "Anchor-based non-linear scale. \"Pin THIS data value\nto THIS position on the sweep\" - splits the range into\ntwo linear segments. e.g. anchor=90, position=50 makes\n0-90 cover the first half of the sweep, 90-max the\nsecond half. anchor_enabled=false (default) = linear.",
+          "group": "Value",
+          "help": "Pin a chosen reading to a fixed spot on the dial instead of sweeping from the start. e.g. put your normal operating temperature at the middle, so the needle rests centre when warmed up and swings high or low if it drifts."
         },
         {
           "name": "anchor_value",
@@ -1202,7 +1448,9 @@
           "type": "number",
           "default": 50,
           "category": "data",
-          "enabled_by": "anchor_enabled"
+          "enabled_by": "anchor_enabled",
+          "group": "Value",
+          "help": "The reading you want pinned in place - e.g. 90 for your normal coolant temp."
         },
         {
           "name": "anchor_position",
@@ -1212,163 +1460,48 @@
           "category": "data",
           "min": 0,
           "max": 100,
-          "enabled_by": "anchor_enabled"
-        },
-        {
-          "name": "redline_enabled",
-          "label": "Redline",
-          "type": "checkbox",
-          "default": false,
-          "category": "data",
-          "_doc": "Redline zone: visual cues drawn between threshold and\nmax. Show Arc + Recolor Ticks default ON so enabling\nthe master toggle gives an immediate visible result."
-        },
-        {
-          "name": "redline_threshold",
-          "label": "Redline Threshold",
-          "type": "number",
-          "default": 80,
-          "category": "data",
-          "enabled_by": "redline_enabled"
-        },
-        {
-          "name": "redline_color",
-          "label": "Redline Color",
-          "type": "color",
-          "default": "#FF0000",
-          "category": "data",
-          "enabled_by": "redline_enabled"
-        },
-        {
-          "name": "redline_show_arc",
-          "label": "Show Arc",
-          "type": "checkbox",
-          "default": true,
-          "category": "data",
-          "enabled_by": "redline_enabled"
-        },
-        {
-          "name": "redline_arc_width",
-          "label": "Arc Width",
-          "type": "stepper",
-          "default": 6,
-          "category": "data",
-          "min": 1,
-          "max": 30,
-          "enabled_by": "redline_enabled"
-        },
-        {
-          "name": "redline_arc_r_mod",
-          "label": "Arc Inset",
-          "type": "stepper",
-          "default": 0,
-          "category": "data",
-          "min": -50,
-          "max": 50,
-          "enabled_by": "redline_enabled"
-        },
-        {
-          "name": "redline_recolor_ticks",
-          "label": "Recolor Ticks",
-          "type": "checkbox",
-          "default": true,
-          "category": "data",
-          "enabled_by": "redline_enabled"
-        },
-        {
-          "name": "meter_bg_color",
-          "label": "Background Color",
-          "type": "color",
-          "default": "#3D3D3D",
-          "category": "appearance",
-          "night_overridable": true
-        },
-        {
-          "name": "meter_bg_opa",
-          "label": "Background Opacity",
-          "type": "stepper",
-          "default": 255,
-          "category": "appearance",
-          "min": 0,
-          "max": 255
-        },
-        {
-          "name": "bg_image_name",
-          "label": "Background Image",
-          "type": "image_picker",
-          "default": "",
-          "category": "appearance",
-          "night_overridable": true
-        },
-        {
-          "name": "border_color",
-          "label": "Border Color",
-          "type": "color",
-          "default": "#000000",
-          "category": "appearance",
-          "night_overridable": true
-        },
-        {
-          "name": "border_width",
-          "label": "Border Width",
-          "type": "stepper",
-          "default": 0,
-          "category": "appearance",
-          "min": 0,
-          "max": 20
-        },
-        {
-          "name": "border_opa",
-          "label": "Border Opacity",
-          "type": "stepper",
-          "default": 255,
-          "category": "appearance",
-          "min": 0,
-          "max": 255
-        },
-        {
-          "name": "scale_padding",
-          "label": "Scale Padding",
-          "type": "stepper",
-          "default": 0,
-          "category": "appearance",
-          "min": 0,
-          "max": 100
+          "enabled_by": "anchor_enabled",
+          "group": "Value",
+          "help": "Where that reading sits along the dial (50 = middle, 0 = start, 100 = end)."
         },
         {
           "name": "show_ticks",
           "label": "Show Ticks",
           "type": "checkbox",
           "default": true,
-          "category": "appearance"
-        },
-        {
-          "name": "minor_tick_width",
-          "label": "Tick Width",
-          "type": "stepper",
-          "default": 2,
           "category": "appearance",
-          "min": 1,
-          "max": 20,
-          "enabled_by": "show_ticks"
+          "group": "Ticks",
+          "help": "Show the marks around the dial, like the lines on a speedometer."
         },
         {
-          "name": "minor_tick_length",
-          "label": "Tick Length",
-          "type": "stepper",
-          "default": 10,
+          "name": "major_tick_step",
+          "label": "Major Tick Value Spacing",
+          "type": "number",
+          "default": 50,
           "category": "appearance",
-          "min": 1,
-          "max": 50,
-          "enabled_by": "show_ticks"
+          "group": "Ticks",
+          "help": "How far apart the biggest marks are, in reading value. On a 0-8000 rev counter, 1000 puts a big mark every 1000 RPM."
         },
         {
-          "name": "minor_tick_color",
-          "label": "Tick Color",
-          "type": "color",
-          "default": "#9E9E9E",
+          "name": "mid_tick_step",
+          "label": "Medium Tick Value Spacing",
+          "type": "number",
+          "default": 0,
           "category": "appearance",
           "enabled_by": "show_ticks",
-          "night_overridable": true
+          "_doc": "Optional 3rd tick tier between minor and major. Value spacing\nin data units (e.g. 500 = a medium tick every 500 RPM). 0 = off.",
+          "group": "Ticks",
+          "help": "How far apart the medium marks are. 0 turns them off."
+        },
+        {
+          "name": "minor_tick_step",
+          "label": "Minor Tick Value Spacing",
+          "type": "number",
+          "default": 10,
+          "category": "appearance",
+          "_doc": "auto_ticks lives in w.config but is NOT in the inspector\n- see _meterSyncDerived. Min/Major Tick Spacing replace\nthe old count-based fields.",
+          "group": "Ticks",
+          "help": "How far apart the smallest marks are. 0 turns them off."
         },
         {
           "name": "major_tick_width",
@@ -1378,7 +1511,33 @@
           "category": "appearance",
           "min": 1,
           "max": 20,
-          "enabled_by": "show_ticks"
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "How thick the biggest marks are."
+        },
+        {
+          "name": "mid_tick_width",
+          "label": "Medium Tick Width",
+          "type": "stepper",
+          "default": 2,
+          "category": "appearance",
+          "min": 0,
+          "max": 20,
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "How thick the medium marks are (0 = off)."
+        },
+        {
+          "name": "minor_tick_width",
+          "label": "Minor Tick Width",
+          "type": "stepper",
+          "default": 2,
+          "category": "appearance",
+          "min": 1,
+          "max": 20,
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "How thick the smallest marks are."
         },
         {
           "name": "major_tick_length",
@@ -1388,7 +1547,33 @@
           "category": "appearance",
           "min": 1,
           "max": 50,
-          "enabled_by": "show_ticks"
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "How long the biggest marks are."
+        },
+        {
+          "name": "mid_tick_length",
+          "label": "Medium Tick Length",
+          "type": "stepper",
+          "default": 13,
+          "category": "appearance",
+          "min": 0,
+          "max": 100,
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "How long the medium marks are (0 = off)."
+        },
+        {
+          "name": "minor_tick_length",
+          "label": "Minor Tick Length",
+          "type": "stepper",
+          "default": 10,
+          "category": "appearance",
+          "min": 1,
+          "max": 50,
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "How long the smallest marks are."
         },
         {
           "name": "major_tick_color",
@@ -1397,14 +1582,123 @@
           "default": "#FFFFFF",
           "category": "appearance",
           "enabled_by": "show_ticks",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Ticks",
+          "help": "Colour of the biggest marks."
+        },
+        {
+          "name": "mid_tick_color",
+          "label": "Medium Tick Color",
+          "type": "color",
+          "default": "#BDBDBD",
+          "category": "appearance",
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "Colour of the medium marks."
+        },
+        {
+          "name": "minor_tick_color",
+          "label": "Minor Tick Color",
+          "type": "color",
+          "default": "#9E9E9E",
+          "category": "appearance",
+          "enabled_by": "show_ticks",
+          "night_overridable": true,
+          "group": "Ticks",
+          "help": "Colour of the smallest marks."
+        },
+        {
+          "name": "major_tick_image_name",
+          "label": "Major Tick Image",
+          "type": "image_picker",
+          "default": "",
+          "category": "appearance",
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "Use a picture for each major (numbered) tick instead of a drawn line. Design it pointing up (tip toward the rim); it's rotated to each tick."
+        },
+        {
+          "name": "mid_tick_image_name",
+          "label": "Medium Tick Image",
+          "type": "image_picker",
+          "default": "",
+          "category": "appearance",
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "Use a picture for each medium tick instead of a drawn line. Design it pointing up (tip toward the rim)."
+        },
+        {
+          "name": "minor_tick_image_name",
+          "label": "Minor Tick Image",
+          "type": "image_picker",
+          "default": "",
+          "category": "appearance",
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "Use a picture for each minor tick instead of a drawn line. Design it pointing up (tip toward the rim)."
+        },
+        {
+          "name": "tick_image_scale",
+          "label": "Tick Image Scale %",
+          "type": "stepper",
+          "default": 100,
+          "min": 10,
+          "max": 400,
+          "category": "appearance",
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "Scale the tick images up or down (100 = original size). Applies to all three tick images."
+        },
+        {
+          "name": "tick_outline_strength",
+          "label": "Tick Outline",
+          "type": "stepper", "default": 0, "min": 0, "max": 255,
+          "category": "appearance", "enabled_by": "show_ticks", "group": "Ticks",
+          "help": "Draw an outline/glow behind the drawn ticks so they pop (0 = off, 255 = solid). No image needed."
+        },
+        {
+          "name": "tick_outline_color",
+          "label": "Tick Outline Color",
+          "type": "color", "default": "#000000",
+          "category": "appearance", "enabled_by": "show_ticks", "group": "Ticks",
+          "help": "Colour of the tick outline/glow (usually black for a crisp edge)."
+        },
+        {
+          "name": "tick_outline_fade",
+          "label": "Tick Outline Fade",
+          "type": "stepper", "default": 0, "min": 0, "max": 20,
+          "category": "appearance", "enabled_by": "show_ticks", "group": "Ticks",
+          "help": "Soften the outline into a glow (0 = hard edge, higher = wider soft glow)."
         },
         {
           "name": "show_tick_labels",
           "label": "Show Tick Labels",
           "type": "checkbox",
           "default": true,
-          "category": "appearance"
+          "category": "appearance",
+          "group": "Numbers",
+          "help": "Show numbers next to the biggest marks."
+        },
+        {
+          "name": "tick_label_font",
+          "label": "Tick Label Font",
+          "type": "font",
+          "default": "",
+          "category": "appearance",
+          "enabled_by": "show_tick_labels",
+          "group": "Numbers",
+          "help": "Text style and size of those numbers."
+        },
+        {
+          "name": "tick_label_color",
+          "label": "Tick Label Color",
+          "type": "color",
+          "default": "#FFFFFF",
+          "category": "appearance",
+          "enabled_by": "show_tick_labels",
+          "night_overridable": true,
+          "group": "Numbers",
+          "help": "Colour of those numbers."
         },
         {
           "name": "label_gap",
@@ -1414,24 +1708,182 @@
           "category": "appearance",
           "min": -150,
           "max": 150,
-          "enabled_by": "show_tick_labels"
+          "enabled_by": "show_tick_labels",
+          "group": "Numbers",
+          "help": "How far the numbers sit from the marks."
         },
         {
-          "name": "tick_label_font",
-          "label": "Tick Label Font",
-          "type": "font",
+          "name": "tick_label_divisor",
+          "label": "Tick Label Divisor",
+          "type": "number",
+          "default": 1,
+          "category": "appearance",
+          "min": 1,
+          "max": 100000,
+          "enabled_by": "show_tick_labels",
+          "_doc": "Divides each tick label by this factor — e.g. 1000 turns a\n0..7000 tach into 0..7 (print the unit elsewhere, \"RPM x1000\").",
+          "group": "Numbers",
+          "help": "Shrink the numbers by dividing them. Set 1000 and a 7000 mark just shows '7' - common on rev counters."
+        },
+        {
+          "name": "redline_enabled",
+          "label": "Redline",
+          "type": "checkbox",
+          "default": false,
+          "category": "data",
+          "_doc": "Redline zone: visual cues drawn between threshold and\nmax. Show Arc + Recolor Ticks default ON so enabling\nthe master toggle gives an immediate visible result.",
+          "group": "Redline",
+          "help": "Show a warning zone, like a rev counter's red zone."
+        },
+        {
+          "name": "redline_threshold",
+          "label": "Redline Threshold",
+          "type": "number",
+          "default": 80,
+          "category": "data",
+          "enabled_by": "redline_enabled",
+          "group": "Redline",
+          "help": "The reading where the warning zone starts."
+        },
+        {
+          "name": "redline_color",
+          "label": "Redline Color",
+          "type": "color",
+          "default": "#FF0000",
+          "category": "data",
+          "enabled_by": "redline_enabled",
+          "group": "Redline",
+          "help": "Colour of the warning zone."
+        },
+        {
+          "name": "redline_show_arc",
+          "label": "Show Arc",
+          "type": "checkbox",
+          "default": true,
+          "category": "data",
+          "enabled_by": "redline_enabled",
+          "group": "Redline",
+          "help": "Draw a coloured band along the warning zone."
+        },
+        {
+          "name": "redline_arc_width",
+          "label": "Arc Width",
+          "type": "stepper",
+          "default": 6,
+          "category": "data",
+          "min": 1,
+          "max": 30,
+          "enabled_by": "redline_enabled",
+          "group": "Redline",
+          "help": "How thick that band is."
+        },
+        {
+          "name": "redline_arc_r_mod",
+          "label": "Arc Inset",
+          "type": "stepper",
+          "default": 0,
+          "category": "data",
+          "min": -50,
+          "max": 50,
+          "enabled_by": "redline_enabled",
+          "group": "Redline",
+          "help": "Move the warning band in or out from the dial."
+        },
+        {
+          "name": "redline_recolor_ticks",
+          "label": "Recolor Ticks",
+          "type": "checkbox",
+          "default": true,
+          "category": "data",
+          "enabled_by": "redline_enabled",
+          "group": "Redline",
+          "help": "Turn the marks inside the warning zone that colour too."
+        },
+        {
+          "name": "smoothing_ms",
+          "label": "Smoothing (ms)",
+          "type": "slider",
+          "default": 40,
+          "category": "data",
+          "min": 0,
+          "max": 300,
+          "step": 10,
+          "group": "Behaviour",
+          "help": "Smooths out jumpy readings. Higher is smoother but slower to react; 0 shows the raw value."
+        },
+        {
+          "name": "meter_bg_color",
+          "label": "Background Color",
+          "type": "color",
+          "default": "#3D3D3D",
+          "category": "appearance",
+          "night_overridable": true,
+          "group": "Frame",
+          "help": "Background colour of the gauge face."
+        },
+        {
+          "name": "meter_bg_opa",
+          "label": "Background Opacity",
+          "type": "stepper",
+          "default": 255,
+          "category": "appearance",
+          "min": 0,
+          "max": 255,
+          "group": "Frame",
+          "help": "How solid the gauge face is (0 = see-through, 255 = solid)."
+        },
+        {
+          "name": "bg_image_name",
+          "label": "Background Image",
+          "type": "image_picker",
           "default": "",
           "category": "appearance",
-          "enabled_by": "show_tick_labels"
+          "night_overridable": true,
+          "group": "Frame",
+          "help": "Use a picture as the gauge face."
         },
         {
-          "name": "tick_label_color",
-          "label": "Tick Label Color",
+          "name": "border_color",
+          "label": "Border Color",
           "type": "color",
-          "default": "#FFFFFF",
+          "default": "#000000",
           "category": "appearance",
-          "enabled_by": "show_tick_labels",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Frame",
+          "help": "Colour of the outline around the gauge."
+        },
+        {
+          "name": "border_width",
+          "label": "Border Width",
+          "type": "stepper",
+          "default": 0,
+          "category": "appearance",
+          "min": 0,
+          "max": 20,
+          "group": "Frame",
+          "help": "Thickness of the outline (0 = none)."
+        },
+        {
+          "name": "border_opa",
+          "label": "Border Opacity",
+          "type": "stepper",
+          "default": 255,
+          "category": "appearance",
+          "min": 0,
+          "max": 255,
+          "group": "Frame",
+          "help": "How solid the outline is (0-255)."
+        },
+        {
+          "name": "scale_padding",
+          "label": "Scale Padding",
+          "type": "stepper",
+          "default": 0,
+          "category": "appearance",
+          "min": 0,
+          "max": 100,
+          "group": "Frame",
+          "help": "Move the marks inward from the edge of the gauge."
         },
         {
           "name": "show_needle",
@@ -1439,46 +1891,9 @@
           "type": "checkbox",
           "default": true,
           "category": "appearance",
-          "_doc": "Master toggle for the value needle. When off, the meter\nrenders ticks / labels / ball only — no needle line, image,\nor needle shadow. Independent of Show Needle Ball."
-        },
-        {
-          "name": "needle_image_name",
-          "label": "Needle Image",
-          "type": "image_picker",
-          "default": "",
-          "category": "appearance",
-          "night_overridable": true,
-          "enabled_by": "show_needle"
-        },
-        {
-          "name": "needle_pivot_x",
-          "label": "Needle Pivot X",
-          "type": "stepper",
-          "default": 0,
-          "category": "appearance",
-          "min": -400,
-          "max": 400,
-          "enabled_by": "needle_image_name"
-        },
-        {
-          "name": "needle_pivot_y",
-          "label": "Needle Pivot Y",
-          "type": "stepper",
-          "default": 0,
-          "category": "appearance",
-          "min": -400,
-          "max": 400,
-          "enabled_by": "needle_image_name"
-        },
-        {
-          "name": "needle_angle_offset",
-          "label": "Needle Angle Offset",
-          "type": "stepper",
-          "default": 0,
-          "category": "appearance",
-          "min": -180,
-          "max": 180,
-          "enabled_by": "needle_image_name"
+          "_doc": "Master toggle for the value needle. When off, the meter\nrenders ticks / labels / ball only — no needle line, image,\nor needle shadow. Independent of Show Needle Ball.",
+          "group": "Needle",
+          "help": "Show the pointer needle."
         },
         {
           "name": "needle_width",
@@ -1488,7 +1903,9 @@
           "category": "appearance",
           "min": 1,
           "max": 20,
-          "enabled_by": "show_needle"
+          "enabled_by": "show_needle",
+          "group": "Needle",
+          "help": "How thick the needle is."
         },
         {
           "name": "needle_color",
@@ -1497,7 +1914,9 @@
           "default": "#FFFFFF",
           "category": "appearance",
           "night_overridable": true,
-          "enabled_by": "show_needle"
+          "enabled_by": "show_needle",
+          "group": "Needle",
+          "help": "Colour of the needle."
         },
         {
           "name": "needle_r_mod",
@@ -1507,7 +1926,9 @@
           "category": "appearance",
           "min": -100,
           "max": 100,
-          "enabled_by": "show_needle"
+          "enabled_by": "show_needle",
+          "group": "Needle",
+          "help": "Shorten the needle from its outer end."
         },
         {
           "name": "needle_rear_length",
@@ -1517,7 +1938,9 @@
           "category": "appearance",
           "min": 0,
           "max": 100,
-          "enabled_by": "show_needle"
+          "enabled_by": "show_needle",
+          "group": "Needle",
+          "help": "How far the needle sticks out behind its centre, for a counterweight look."
         },
         {
           "name": "needle_inner_radius",
@@ -1527,7 +1950,9 @@
           "category": "appearance",
           "min": 0,
           "max": 400,
-          "enabled_by": "show_needle"
+          "enabled_by": "show_needle",
+          "group": "Needle",
+          "help": "Start the needle away from the centre, leaving a gap in the middle."
         },
         {
           "name": "needle_tip_style",
@@ -1537,31 +1962,15 @@
           "category": "appearance",
           "enabled_by": "show_needle",
           "options": [
-            {
-              "value": 0,
-              "label": "Flat"
-            },
-            {
-              "value": 1,
-              "label": "Rounded"
-            },
-            {
-              "value": 2,
-              "label": "Lance"
-            },
-            {
-              "value": 3,
-              "label": "Dagger"
-            },
-            {
-              "value": 4,
-              "label": "Spade"
-            },
-            {
-              "value": 5,
-              "label": "Diamond"
-            }
-          ]
+            { "value": 0, "label": "Flat" },
+            { "value": 1, "label": "Rounded" },
+            { "value": 2, "label": "Lance" },
+            { "value": 3, "label": "Dagger" },
+            { "value": 4, "label": "Spade" },
+            { "value": 5, "label": "Diamond" }
+          ],
+          "group": "Needle",
+          "help": "The shape of the needle's tip."
         },
         {
           "name": "needle_tip_base_w",
@@ -1574,7 +1983,10 @@
           "_doc": "Tip-tuning knobs. Stored value 0 = \"use the built-in\ndefault for the current style\". `autoFn` returns the\nresolved default the firmware would pick - mirrors the\nsame defaults used in widget_meter.c's DRAW_PART hook\nso the inspector can show the effective number even\nwhen the user hasn't entered an explicit override.",
           "_raw_extra": {
             "autoFn": "function(cfg) {\n                          var nw = cfg.needle_width || 4;\n                          switch (cfg.needle_tip_style) {\n                              case 2: return (nw >> 1) + 1;  // Lance\n                              case 3: return (nw >> 1) + 2;  // Dagger\n                              case 4: return (nw >> 1) + 2;  // Spade\n                              case 5: return (nw >> 1) + 3;  // Diamond\n                              default: return 0;\n                          }\n                      }"
-          }
+          },
+          "group": "Needle",
+          "help": "How wide the needle is at its base (leave at auto unless you want to set it).",
+          "enabled_by": "show_needle"
         },
         {
           "name": "needle_tip_point_w",
@@ -1586,7 +1998,10 @@
           "max": 20,
           "_raw_extra": {
             "autoFn": "function(cfg) {\n                          return cfg.needle_tip_style === 4 ? 1 : 0;  // only Spade has a default cap\n                      }"
-          }
+          },
+          "group": "Needle",
+          "help": "How wide the needle is at its tip.",
+          "enabled_by": "show_needle"
         },
         {
           "name": "needle_tip_taper",
@@ -1598,7 +2013,57 @@
           "max": 100,
           "_raw_extra": {
             "autoFn": "function(cfg) {\n                          switch (cfg.needle_tip_style) {\n                              case 2: return 90;   // Lance: shaft ends here\n                              case 3: return 100;  // Dagger: tapers across full length\n                              case 4: return 97;   // Spade: cap position\n                              case 5: return 50;   // Diamond: widest point\n                              default: return 0;\n                          }\n                      }"
-          }
+          },
+          "group": "Needle",
+          "help": "How sharply the needle narrows toward the tip.",
+          "enabled_by": "show_needle"
+        },
+        {
+          "name": "needle_image_name",
+          "label": "Needle Image",
+          "type": "image_picker",
+          "default": "",
+          "category": "appearance",
+          "night_overridable": true,
+          "enabled_by": "show_needle",
+          "group": "Needle",
+          "help": "Use a picture as the needle instead of a drawn one."
+        },
+        {
+          "name": "needle_pivot_x",
+          "label": "Needle Pivot X",
+          "type": "stepper",
+          "default": 0,
+          "category": "appearance",
+          "min": -400,
+          "max": 400,
+          "enabled_by": "needle_image_name",
+          "group": "Needle",
+          "help": "Move the needle's centre point left or right."
+        },
+        {
+          "name": "needle_pivot_y",
+          "label": "Needle Pivot Y",
+          "type": "stepper",
+          "default": 0,
+          "category": "appearance",
+          "min": -400,
+          "max": 400,
+          "enabled_by": "needle_image_name",
+          "group": "Needle",
+          "help": "Move the needle's centre point up or down."
+        },
+        {
+          "name": "needle_angle_offset",
+          "label": "Needle Angle Offset",
+          "type": "stepper",
+          "default": 0,
+          "category": "appearance",
+          "min": -180,
+          "max": 180,
+          "enabled_by": "needle_image_name",
+          "group": "Needle",
+          "help": "Rotate where the needle rests, in degrees."
         },
         {
           "name": "show_needle_ball",
@@ -1606,7 +2071,9 @@
           "type": "checkbox",
           "default": true,
           "category": "appearance",
-          "_doc": "Toggle the center pivot ball. When off, the ball is hidden\nregardless of size. Independent of Show Needle."
+          "_doc": "Toggle the center pivot ball. When off, the ball is hidden\nregardless of size. Independent of Show Needle.",
+          "group": "Needle",
+          "help": "Show a round hub in the middle of the needle."
         },
         {
           "name": "needle_ball_size",
@@ -1616,7 +2083,9 @@
           "category": "appearance",
           "min": 0,
           "max": 40,
-          "enabled_by": "show_needle_ball"
+          "enabled_by": "show_needle_ball",
+          "group": "Needle",
+          "help": "How big the hub is."
         },
         {
           "name": "needle_ball_color",
@@ -1625,7 +2094,9 @@
           "default": "#FFFFFF",
           "category": "appearance",
           "night_overridable": true,
-          "enabled_by": "show_needle_ball"
+          "enabled_by": "show_needle_ball",
+          "group": "Needle",
+          "help": "Colour of the hub."
         }
       ]
     },
@@ -1651,7 +2122,9 @@
           "type": "image_picker",
           "default": "",
           "category": "data",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Image",
+          "help": "The picture to show."
         },
         {
           "name": "image_scale",
@@ -1660,7 +2133,9 @@
           "default": 100,
           "category": "appearance",
           "min": 10,
-          "max": 200
+          "max": 200,
+          "group": "Image",
+          "help": "Resize the picture, as a percentage."
         },
         {
           "name": "opacity",
@@ -1669,7 +2144,9 @@
           "default": 255,
           "category": "appearance",
           "min": 0,
-          "max": 255
+          "max": 255,
+          "group": "Image",
+          "help": "How see-through the picture is (0 = invisible, 255 = solid)."
         },
         {
           "name": "recolor",
@@ -1677,7 +2154,9 @@
           "type": "color",
           "default": "#000000",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Image",
+          "help": "Tint the whole picture this colour."
         },
         {
           "name": "recolor_opa",
@@ -1686,7 +2165,9 @@
           "default": 0,
           "category": "appearance",
           "min": 0,
-          "max": 255
+          "max": 255,
+          "group": "Image",
+          "help": "How strong the tint is (0 = none, 255 = full). Tinting a light icon white can make it disappear."
         }
       ]
     },
@@ -1713,39 +2194,17 @@
           "default": "rectangle",
           "category": "appearance",
           "options": [
-            {
-              "value": "rectangle",
-              "label": "Rectangle"
-            },
-            {
-              "value": "circle",
-              "label": "Circle"
-            },
-            {
-              "value": "triangle",
-              "label": "Triangle"
-            },
-            {
-              "value": "diamond",
-              "label": "Diamond"
-            },
-            {
-              "value": "arrow_right",
-              "label": "Arrow ▶"
-            },
-            {
-              "value": "arrow_left",
-              "label": "Arrow ◀"
-            },
-            {
-              "value": "chevron_right",
-              "label": "Chevron ❯"
-            },
-            {
-              "value": "chevron_left",
-              "label": "Chevron ❮"
-            }
-          ]
+            { "value": "rectangle", "label": "Rectangle" },
+            { "value": "circle", "label": "Circle" },
+            { "value": "triangle", "label": "Triangle" },
+            { "value": "diamond", "label": "Diamond" },
+            { "value": "arrow_right", "label": "Arrow ▶" },
+            { "value": "arrow_left", "label": "Arrow ◀" },
+            { "value": "chevron_right", "label": "Chevron ❯" },
+            { "value": "chevron_left", "label": "Chevron ❮" }
+          ],
+          "group": "Shape",
+          "help": "The shape to draw."
         },
         {
           "name": "bg_color",
@@ -1753,7 +2212,9 @@
           "type": "color",
           "default": "#1A1A1A",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Fill",
+          "help": "Fill colour."
         },
         {
           "name": "bg_opa",
@@ -1762,7 +2223,9 @@
           "default": 255,
           "category": "appearance",
           "min": 0,
-          "max": 255
+          "max": 255,
+          "group": "Fill",
+          "help": "How see-through the fill is (0 = invisible, 255 = solid)."
         },
         {
           "name": "border_color",
@@ -1770,7 +2233,9 @@
           "type": "color",
           "default": "#2E2F2E",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Frame",
+          "help": "Colour of the outline."
         },
         {
           "name": "border_width",
@@ -1779,7 +2244,9 @@
           "default": 0,
           "category": "appearance",
           "min": 0,
-          "max": 20
+          "max": 20,
+          "group": "Frame",
+          "help": "Thickness of the outline (0 = none)."
         },
         {
           "name": "border_radius",
@@ -1788,7 +2255,9 @@
           "default": 10,
           "category": "appearance",
           "min": 0,
-          "max": 200
+          "max": 200,
+          "group": "Frame",
+          "help": "How rounded the corners are (for rectangles)."
         },
         {
           "name": "shadow_width",
@@ -1797,7 +2266,9 @@
           "default": 0,
           "category": "appearance",
           "min": 0,
-          "max": 50
+          "max": 50,
+          "group": "Shadow",
+          "help": "How far the drop shadow spreads (0 = no shadow)."
         },
         {
           "name": "shadow_color",
@@ -1805,7 +2276,9 @@
           "type": "color",
           "default": "#000000",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Shadow",
+          "help": "Colour of the shadow."
         },
         {
           "name": "shadow_opa",
@@ -1814,7 +2287,9 @@
           "default": 128,
           "category": "appearance",
           "min": 0,
-          "max": 255
+          "max": 255,
+          "group": "Shadow",
+          "help": "How dark the shadow is (0-255)."
         },
         {
           "name": "shadow_ofs_x",
@@ -1823,7 +2298,9 @@
           "default": 0,
           "category": "appearance",
           "min": -100,
-          "max": 100
+          "max": 100,
+          "group": "Shadow",
+          "help": "Move the shadow left or right."
         },
         {
           "name": "shadow_ofs_y",
@@ -1832,14 +2309,18 @@
           "default": 0,
           "category": "appearance",
           "min": -100,
-          "max": 100
+          "max": 100,
+          "group": "Shadow",
+          "help": "Move the shadow up or down."
         },
         {
           "name": "bake_into_gauge",
           "label": "Bake Into Gauge (perf)",
           "type": "checkbox",
           "default": false,
-          "category": "appearance"
+          "category": "appearance",
+          "group": "Behaviour",
+          "help": "Lock this shape into the background so it draws faster. It won't change while driving - use for decoration only."
         }
       ]
     },
@@ -1860,12 +2341,29 @@
       },
       "fields": [
         {
+          "name": "orientation",
+          "label": "Orientation",
+          "type": "select",
+          "default": "horizontal",
+          "category": "appearance",
+          "options": [
+            { "value": "horizontal", "label": "Horizontal" },
+            { "value": "vertical", "label": "Vertical" },
+            { "value": "diagonal_fwd", "label": "Diagonal /" },
+            { "value": "diagonal_bwd", "label": "Diagonal \\" }
+          ],
+          "group": "Style",
+          "help": "Which way the line runs (across, up-down, or diagonal)."
+        },
+        {
           "name": "line_color",
           "label": "Color",
           "type": "color",
           "default": "#FFFFFF",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Style",
+          "help": "Colour of the line."
         },
         {
           "name": "line_width",
@@ -1874,7 +2372,9 @@
           "default": 4,
           "category": "appearance",
           "min": 1,
-          "max": 30
+          "max": 30,
+          "group": "Style",
+          "help": "How thick the line is."
         },
         {
           "name": "line_opa",
@@ -1883,39 +2383,18 @@
           "default": 255,
           "category": "appearance",
           "min": 0,
-          "max": 255
+          "max": 255,
+          "group": "Style",
+          "help": "How see-through the line is (0-255)."
         },
         {
           "name": "rounded",
           "label": "Rounded Ends",
           "type": "checkbox",
           "default": false,
-          "category": "appearance"
-        },
-        {
-          "name": "orientation",
-          "label": "Orientation",
-          "type": "select",
-          "default": "horizontal",
           "category": "appearance",
-          "options": [
-            {
-              "value": "horizontal",
-              "label": "Horizontal"
-            },
-            {
-              "value": "vertical",
-              "label": "Vertical"
-            },
-            {
-              "value": "diagonal_fwd",
-              "label": "Diagonal /"
-            },
-            {
-              "value": "diagonal_bwd",
-              "label": "Diagonal \\"
-            }
-          ]
+          "group": "Style",
+          "help": "Round the line's ends."
         },
         {
           "name": "dash_gap",
@@ -1924,7 +2403,9 @@
           "default": 0,
           "category": "appearance",
           "min": 0,
-          "max": 40
+          "max": 40,
+          "group": "Style",
+          "help": "Gap between dashes (0 = a solid line)."
         }
       ]
     },
@@ -1945,73 +2426,73 @@
       },
       "fields": [
         {
-          "name": "text",
-          "label": "Message",
-          "type": "text",
-          "default": "WARNING",
-          "category": "data"
-        },
-        {
           "name": "op",
           "label": "Operator",
           "type": "select",
           "default": 0,
           "category": "data",
           "options": [
-            {
-              "value": 0,
-              "label": ">"
-            },
-            {
-              "value": 1,
-              "label": "<"
-            },
-            {
-              "value": 2,
-              "label": ">="
-            },
-            {
-              "value": 3,
-              "label": "<="
-            },
-            {
-              "value": 4,
-              "label": "=="
-            },
-            {
-              "value": 5,
-              "label": "!="
-            },
-            {
-              "value": 6,
-              "label": "range"
-            },
-            {
-              "value": 7,
-              "label": "always (test)"
-            }
-          ]
+            { "value": 0, "label": ">" },
+            { "value": 1, "label": "<" },
+            { "value": 2, "label": ">=" },
+            { "value": 3, "label": "<=" },
+            { "value": 4, "label": "==" },
+            { "value": 5, "label": "!=" },
+            { "value": 6, "label": "range" },
+            { "value": 7, "label": "always (test)" }
+          ],
+          "group": "Value",
+          "help": "How the reading is checked to pop up the message (over, under, equal to, or within a range)."
         },
         {
           "name": "threshold",
           "label": "Threshold",
           "type": "number",
           "default": 0,
-          "category": "data"
+          "category": "data",
+          "group": "Value",
+          "help": "The value the reading is checked against."
         },
         {
           "name": "range_min",
           "label": "Range Min",
           "type": "number",
           "default": 0,
-          "category": "data"
+          "category": "data",
+          "group": "Value",
+          "help": "The bottom of the range (when using 'within a range')."
         },
         {
           "name": "range_max",
           "label": "Range Max",
           "type": "number",
           "default": 0,
-          "category": "data"
+          "category": "data",
+          "group": "Value",
+          "help": "The top of the range (when using 'within a range')."
+        },
+        {
+          "name": "text",
+          "label": "Message",
+          "type": "text",
+          "default": "WARNING",
+          "category": "data",
+          "group": "Text",
+          "help": "The message to show when it pops up."
+        },
+        {
+          "name": "text_align",
+          "label": "Text Align",
+          "type": "select",
+          "default": 1,
+          "category": "data",
+          "options": [
+            { "value": 0, "label": "Left" },
+            { "value": 1, "label": "Center" },
+            { "value": 2, "label": "Right" }
+          ],
+          "group": "Text",
+          "help": "Line the message up left, centre or right."
         },
         {
           "name": "bg_color",
@@ -2019,16 +2500,20 @@
           "type": "color",
           "default": "#FF0000",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Fill",
+          "help": "Background colour."
         },
         {
           "name": "bg_opa",
           "label": "Opacity",
-          "type": "slider",
+          "type": "stepper",
           "default": 128,
           "category": "appearance",
           "min": 0,
-          "max": 255
+          "max": 255,
+          "group": "Fill",
+          "help": "How solid the background is (0-255)."
         },
         {
           "name": "text_color",
@@ -2036,35 +2521,18 @@
           "type": "color",
           "default": "#000000",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Text",
+          "help": "Colour of the message."
         },
         {
           "name": "font",
           "label": "Font",
           "type": "font",
           "default": "",
-          "category": "appearance"
-        },
-        {
-          "name": "text_align",
-          "label": "Text Align",
-          "type": "select",
-          "default": 1,
           "category": "appearance",
-          "options": [
-            {
-              "value": 0,
-              "label": "Left"
-            },
-            {
-              "value": 1,
-              "label": "Center"
-            },
-            {
-              "value": 2,
-              "label": "Right"
-            }
-          ]
+          "group": "Text",
+          "help": "Text style and size."
         },
         {
           "name": "border_width",
@@ -2073,7 +2541,9 @@
           "default": 0,
           "category": "appearance",
           "min": 0,
-          "max": 20
+          "max": 20,
+          "group": "Frame",
+          "help": "Thickness of the outline (0 = none)."
         },
         {
           "name": "border_color",
@@ -2081,7 +2551,9 @@
           "type": "color",
           "default": "#000000",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Frame",
+          "help": "Colour of the outline."
         },
         {
           "name": "radius",
@@ -2090,7 +2562,9 @@
           "default": 0,
           "category": "appearance",
           "min": 0,
-          "max": 100
+          "max": 100,
+          "group": "Frame",
+          "help": "How rounded the corners are."
         }
       ]
     },
@@ -2118,45 +2592,110 @@
           "category": "data",
           "min": 0,
           "max": 359,
-          "step": 5
+          "step": 5,
+          "group": "Value",
+          "help": "Where the gauge starts, as a clock position in degrees (0 = 3 o'clock, going clockwise). This is the empty end."
         },
         {
           "name": "sweep_degrees",
           "label": "Sweep (°)",
-          "type": "slider",
+          "type": "stepper",
           "default": 270,
           "category": "data",
           "min": 30,
           "max": 360,
-          "step": 5
+          "step": 5,
+          "group": "Value",
+          "help": "How far around the circle the gauge goes. 270 covers most of a circle like a normal gauge; 360 is a full circle."
         },
         {
           "name": "signal_min",
           "label": "Signal Min",
           "type": "number",
           "default": 0,
-          "category": "data"
+          "category": "data",
+          "group": "Value",
+          "help": "The reading that shows the gauge empty (the start)."
         },
         {
           "name": "signal_max",
           "label": "Signal Max",
           "type": "number",
           "default": 100,
-          "category": "data"
+          "category": "data",
+          "group": "Value",
+          "help": "The reading that shows the gauge full (the end)."
         },
         {
           "name": "tick_min",
           "label": "Tick Start Value",
           "type": "number",
           "default": 0,
-          "category": "data"
+          "category": "data",
+          "group": "Value",
+          "help": "The first number the marks count from. Usually the same as the empty value."
         },
         {
           "name": "tick_max",
           "label": "Tick End Value",
           "type": "number",
           "default": 0,
-          "category": "data"
+          "category": "data",
+          "group": "Value",
+          "help": "The last number the marks count up to. Usually the same as the full value."
+        },
+        {
+          "name": "anchor_enabled",
+          "label": "Anchor Curve",
+          "type": "checkbox",
+          "default": false,
+          "category": "data",
+          "_doc": "Anchor-based non-linear scale. \"Pin THIS data value to\nTHIS position on the bar\" - splits the range into two\nlinear segments. e.g. coolant 0-110, anchor=90,\nposition=50 makes 0-90 cover the first half, 90-110\ncover the second half. anchor_enabled=false (default)\n= pure linear.",
+          "group": "Value",
+          "help": "Pin a chosen reading to a fixed spot on the gauge instead of filling from the empty end. e.g. put your normal operating temperature in the middle, so the gauge sits centre when warmed up and clearly runs high or low if it drifts."
+        },
+        {
+          "name": "anchor_value",
+          "label": "Anchor Value",
+          "type": "number",
+          "default": 50,
+          "category": "data",
+          "enabled_by": "anchor_enabled",
+          "group": "Value",
+          "help": "The reading you want pinned in place - e.g. 90 for your normal coolant temp."
+        },
+        {
+          "name": "anchor_position",
+          "label": "Anchor Position (%)",
+          "type": "slider",
+          "default": 50,
+          "category": "data",
+          "min": 0,
+          "max": 100,
+          "enabled_by": "anchor_enabled",
+          "group": "Value",
+          "help": "Where that reading sits along the gauge (50 = middle, 0 = start, 100 = end)."
+        },
+        {
+          "name": "reverse",
+          "label": "Reverse Direction",
+          "type": "checkbox",
+          "default": false,
+          "category": "data",
+          "group": "Value",
+          "help": "Run the gauge backwards, so the full end becomes the empty end."
+        },
+        {
+          "name": "smoothing_ms",
+          "label": "Smoothing (ms)",
+          "type": "slider",
+          "default": 40,
+          "category": "data",
+          "min": 0,
+          "max": 300,
+          "step": 10,
+          "group": "Behaviour",
+          "help": "Smooths out jumpy readings. Higher is smoother but slower to react; 0 shows the raw, instant value."
         },
         {
           "name": "arc_width",
@@ -2165,7 +2704,9 @@
           "default": 10,
           "category": "appearance",
           "min": 1,
-          "max": 50
+          "max": 50,
+          "group": "Fill",
+          "help": "How thick the coloured (filled) part of the gauge is."
         },
         {
           "name": "arc_offset",
@@ -2174,7 +2715,9 @@
           "default": 0,
           "category": "appearance",
           "min": 0,
-          "max": 120
+          "max": 120,
+          "group": "Fill",
+          "help": "Moves the ring in or out from the centre. Use it to stack one gauge inside another."
         },
         {
           "name": "arc_color",
@@ -2182,7 +2725,9 @@
           "type": "color",
           "default": "#00FF00",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Fill",
+          "help": "Colour of the filled part."
         },
         {
           "name": "bg_arc_color",
@@ -2190,7 +2735,9 @@
           "type": "color",
           "default": "#333333",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Fill",
+          "help": "Colour of the empty part behind the fill."
         },
         {
           "name": "bg_arc_width",
@@ -2199,14 +2746,58 @@
           "default": 10,
           "category": "appearance",
           "min": 1,
-          "max": 50
+          "max": 50,
+          "group": "Fill",
+          "help": "How thick the empty background ring is. Make it wider or narrower than the fill for a raised or recessed look."
         },
         {
           "name": "rounded_ends",
           "label": "Rounded Ends",
           "type": "checkbox",
           "default": false,
-          "category": "appearance"
+          "category": "appearance",
+          "group": "Fill",
+          "help": "Give the gauge rounded ends instead of flat-cut ones."
+        },
+        {
+          "name": "fade_fill",
+          "label": "Fade Fill",
+          "type": "checkbox",
+          "default": false,
+          "category": "appearance",
+          "help": "Fade the colour from dim to bright along the filled part, for a glowing look.",
+          "group": "Fill"
+        },
+        {
+          "name": "lead_edge_enabled",
+          "label": "Leading Edge",
+          "type": "checkbox",
+          "default": true,
+          "category": "appearance",
+          "help": "Add a bright tip that sits at the current reading, like the glowing end of a digital bar.",
+          "group": "Fill"
+        },
+        {
+          "name": "lead_edge_color",
+          "label": "Leading Edge Color",
+          "type": "color",
+          "default": "#E6FAFF",
+          "category": "appearance",
+          "enabled_by": "lead_edge_enabled",
+          "group": "Fill",
+          "help": "Colour of that bright tip."
+        },
+        {
+          "name": "lead_edge_width",
+          "label": "Leading Edge Width",
+          "type": "stepper",
+          "default": 6,
+          "min": 0,
+          "max": 40,
+          "category": "appearance",
+          "enabled_by": "lead_edge_enabled",
+          "group": "Fill",
+          "help": "How wide the bright tip is."
         },
         {
           "name": "arc_image",
@@ -2214,7 +2805,9 @@
           "type": "image_picker",
           "default": "",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Fill",
+          "help": "Use a picture for the empty background instead of a plain colour."
         },
         {
           "name": "arc_image_full",
@@ -2222,22 +2815,148 @@
           "type": "image_picker",
           "default": "",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Fill",
+          "help": "Use a picture for the filled part instead of a plain colour. It's uncovered bit by bit as the reading rises."
+        },
+        {
+          "name": "arc_image_opa",
+          "label": "Track Image Opacity",
+          "type": "stepper",
+          "default": 255,
+          "category": "appearance",
+          "min": 0,
+          "max": 255,
+          "group": "Fill",
+          "help": "How solid the track image is (255 = fully visible, 0 = invisible)."
+        },
+        {
+          "name": "arc_image_recolor",
+          "label": "Track Image Tint",
+          "type": "color",
+          "default": "#000000",
+          "category": "appearance",
+          "group": "Fill",
+          "help": "Colour blended into the track image (turn up the tint strength to use it)."
+        },
+        {
+          "name": "arc_image_recolor_opa",
+          "label": "Track Tint Strength",
+          "type": "stepper",
+          "default": 0,
+          "category": "appearance",
+          "min": 0,
+          "max": 255,
+          "group": "Fill",
+          "help": "How strongly the tint colour is mixed into the track image (0 = off)."
+        },
+        {
+          "name": "arc_image_blend",
+          "label": "Track Image Blend",
+          "type": "select",
+          "default": 0,
+          "category": "appearance",
+          "options": [
+            { "value": 0, "label": "Normal" },
+            { "value": 1, "label": "Additive" },
+            { "value": 2, "label": "Subtractive" },
+            { "value": 3, "label": "Multiply" }
+          ],
+          "group": "Fill",
+          "help": "How the track image is layered over what's behind it (Additive glows, Multiply darkens)."
+        },
+        {
+          "name": "arc_image_full_opa",
+          "label": "Fill Image Opacity",
+          "type": "stepper",
+          "default": 255,
+          "category": "appearance",
+          "min": 0,
+          "max": 255,
+          "group": "Fill",
+          "help": "How solid the fill image is (255 = fully visible, 0 = invisible)."
+        },
+        {
+          "name": "arc_image_full_recolor",
+          "label": "Fill Image Tint",
+          "type": "color",
+          "default": "#000000",
+          "category": "appearance",
+          "group": "Fill",
+          "help": "Colour blended into the fill image (turn up the tint strength to use it)."
+        },
+        {
+          "name": "arc_image_full_recolor_opa",
+          "label": "Fill Tint Strength",
+          "type": "stepper",
+          "default": 0,
+          "category": "appearance",
+          "min": 0,
+          "max": 255,
+          "group": "Fill",
+          "help": "How strongly the tint colour is mixed into the fill image (0 = off)."
+        },
+        {
+          "name": "arc_image_full_blend",
+          "label": "Fill Image Blend",
+          "type": "select",
+          "default": 0,
+          "category": "appearance",
+          "options": [
+            { "value": 0, "label": "Normal" },
+            { "value": 1, "label": "Additive" },
+            { "value": 2, "label": "Subtractive" },
+            { "value": 3, "label": "Multiply" }
+          ],
+          "group": "Fill",
+          "help": "How the fill image is layered over what's behind it (Additive glows, Multiply darkens)."
+        },
+        {
+          "name": "arc_image_radial",
+          "label": "Radial Fill Reveal",
+          "type": "checkbox",
+          "default": false,
+          "category": "appearance",
+          "group": "Fill",
+          "help": "Uncover the fill image AROUND the ring (for round gauges) instead of sliding it in left-to-right. Use with a full ring fill image."
+        },
+        {
+          "name": "redline_color",
+          "label": "Redline Color",
+          "type": "color",
+          "default": "#FF0000",
+          "category": "appearance",
+          "group": "Redline",
+          "help": "Colour of the warning zone (like a rev counter's red zone). Where it starts is set by this reading's high-warning level."
+        },
+        {
+          "name": "redline_arc_width",
+          "label": "Redline Thickness",
+          "type": "stepper",
+          "default": 0,
+          "category": "appearance",
+          "min": 0,
+          "max": 50,
+          "group": "Redline",
+          "help": "How thick the warning-zone band is."
+        },
+        {
+          "name": "redline_recolor_fill",
+          "label": "Redline Recolors Fill",
+          "type": "checkbox",
+          "default": true,
+          "category": "appearance",
+          "group": "Redline",
+          "help": "When the reading reaches the warning zone, turn the whole fill that colour - not just the band."
         },
         {
           "name": "show_ticks",
           "label": "Show Ticks",
           "type": "checkbox",
           "default": false,
-          "category": "appearance"
-        },
-        {
-          "name": "minor_tick_step",
-          "label": "Minor Tick Value Spacing",
-          "type": "number",
-          "default": 10,
           "category": "appearance",
-          "enabled_by": "show_ticks"
+          "group": "Ticks",
+          "help": "Show the marks around the gauge, like the lines on a speedometer."
         },
         {
           "name": "major_tick_step",
@@ -2245,16 +2964,52 @@
           "type": "number",
           "default": 50,
           "category": "appearance",
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "How far apart the biggest marks are, in reading value. On a 0-8000 rev counter, 1000 puts a big mark every 1000 RPM."
+        },
+        {
+          "name": "mid_tick_step",
+          "label": "Medium Tick Value Spacing",
+          "type": "number",
+          "default": 0,
+          "category": "appearance",
+          "group": "Ticks",
+          "help": "How far apart the medium marks are. 0 turns them off.",
           "enabled_by": "show_ticks"
         },
         {
-          "name": "minor_tick_length",
-          "label": "Minor Tick Length",
-          "type": "stepper",
+          "name": "minor_tick_step",
+          "label": "Minor Tick Value Spacing",
+          "type": "number",
           "default": 10,
           "category": "appearance",
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "How far apart the smallest marks are. 0 turns them off."
+        },
+        {
+          "name": "major_tick_width",
+          "label": "Major Tick Width",
+          "type": "stepper",
+          "default": 4,
+          "category": "appearance",
+          "min": 1,
+          "max": 20,
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "How thick the biggest marks are."
+        },
+        {
+          "name": "mid_tick_width",
+          "label": "Medium Tick Width",
+          "type": "stepper",
+          "default": 2,
+          "category": "appearance",
           "min": 0,
-          "max": 50,
+          "max": 20,
+          "group": "Ticks",
+          "help": "How thick the medium marks are.",
           "enabled_by": "show_ticks"
         },
         {
@@ -2265,7 +3020,9 @@
           "category": "appearance",
           "min": 1,
           "max": 20,
-          "enabled_by": "show_ticks"
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "How thick the smallest marks are."
         },
         {
           "name": "major_tick_length",
@@ -2275,16 +3032,53 @@
           "category": "appearance",
           "min": 0,
           "max": 50,
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "How long the biggest marks are."
+        },
+        {
+          "name": "mid_tick_length",
+          "label": "Medium Tick Length",
+          "type": "stepper",
+          "default": 13,
+          "category": "appearance",
+          "min": 0,
+          "max": 100,
+          "group": "Ticks",
+          "help": "How long the medium marks are.",
           "enabled_by": "show_ticks"
         },
         {
-          "name": "major_tick_width",
-          "label": "Major Tick Width",
+          "name": "minor_tick_length",
+          "label": "Minor Tick Length",
           "type": "stepper",
-          "default": 4,
+          "default": 10,
           "category": "appearance",
-          "min": 1,
-          "max": 20,
+          "min": 0,
+          "max": 50,
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "How long the smallest marks are."
+        },
+        {
+          "name": "major_tick_color",
+          "label": "Major Tick Color",
+          "type": "color",
+          "default": "#FFFFFF",
+          "category": "appearance",
+          "night_overridable": true,
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "Colour of the biggest marks."
+        },
+        {
+          "name": "mid_tick_color",
+          "label": "Medium Tick Color",
+          "type": "color",
+          "default": "#BDBDBD",
+          "category": "appearance",
+          "group": "Ticks",
+          "help": "Colour of the medium marks.",
           "enabled_by": "show_ticks"
         },
         {
@@ -2294,62 +3088,195 @@
           "default": "#9E9E9E",
           "category": "appearance",
           "night_overridable": true,
-          "enabled_by": "show_ticks"
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "Colour of the smallest marks."
         },
         {
-          "name": "major_tick_color",
-          "label": "Major Tick Color",
-          "type": "color",
-          "default": "#FFFFFF",
+          "name": "major_tick_image_name",
+          "label": "Major Tick Image",
+          "type": "image_picker",
+          "default": "",
           "category": "appearance",
-          "night_overridable": true,
-          "enabled_by": "show_ticks"
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "Use a picture for each major tick instead of a drawn line. Design it pointing up (tip toward the rim); it's rotated to each tick."
         },
         {
-          "name": "mid_tick_step",
-          "label": "Medium Tick Step",
-          "type": "number",
-          "default": 0,
-          "category": "appearance"
-        },
-        {
-          "name": "mid_tick_length",
-          "label": "Medium Tick Length",
-          "type": "stepper",
-          "default": 13,
+          "name": "mid_tick_image_name",
+          "label": "Medium Tick Image",
+          "type": "image_picker",
+          "default": "",
           "category": "appearance",
-          "min": 0,
-          "max": 100
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "Use a picture for each medium tick instead of a drawn line. Design it pointing up (tip toward the rim)."
         },
         {
-          "name": "mid_tick_width",
-          "label": "Medium Tick Width",
-          "type": "stepper",
-          "default": 2,
+          "name": "minor_tick_image_name",
+          "label": "Minor Tick Image",
+          "type": "image_picker",
+          "default": "",
           "category": "appearance",
-          "min": 0,
-          "max": 20
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "Use a picture for each minor tick instead of a drawn line. Design it pointing up (tip toward the rim)."
         },
         {
-          "name": "mid_tick_color",
-          "label": "Medium Tick Color",
-          "type": "color",
-          "default": "#BDBDBD",
-          "category": "appearance"
+          "name": "major_tick_image_scale",
+          "label": "Major Tick Scale %",
+          "type": "stepper", "default": 100, "min": 10, "max": 400,
+          "category": "appearance", "enabled_by": "show_ticks", "group": "Ticks",
+          "help": "Scale the major tick image (100 = original size)."
+        },
+        {
+          "name": "mid_tick_image_scale",
+          "label": "Medium Tick Scale %",
+          "type": "stepper", "default": 100, "min": 10, "max": 400,
+          "category": "appearance", "enabled_by": "show_ticks", "group": "Ticks",
+          "help": "Scale the medium tick image (100 = original size)."
+        },
+        {
+          "name": "minor_tick_image_scale",
+          "label": "Minor Tick Scale %",
+          "type": "stepper", "default": 100, "min": 10, "max": 400,
+          "category": "appearance", "enabled_by": "show_ticks", "group": "Ticks",
+          "help": "Scale the minor tick image (100 = original size)."
+        },
+        {
+          "name": "major_tick_image_opa",
+          "label": "Major Tick Opacity",
+          "type": "stepper", "default": 255, "min": 0, "max": 255,
+          "category": "appearance", "enabled_by": "show_ticks", "group": "Ticks",
+          "help": "Fade the major tick image (255 = solid, 0 = invisible)."
+        },
+        {
+          "name": "mid_tick_image_opa",
+          "label": "Medium Tick Opacity",
+          "type": "stepper", "default": 255, "min": 0, "max": 255,
+          "category": "appearance", "enabled_by": "show_ticks", "group": "Ticks",
+          "help": "Fade the medium tick image (255 = solid, 0 = invisible)."
+        },
+        {
+          "name": "minor_tick_image_opa",
+          "label": "Minor Tick Opacity",
+          "type": "stepper", "default": 255, "min": 0, "max": 255,
+          "category": "appearance", "enabled_by": "show_ticks", "group": "Ticks",
+          "help": "Fade the minor tick image (255 = solid, 0 = invisible)."
+        },
+        {
+          "name": "major_tick_image_recolor",
+          "label": "Major Tick Tint",
+          "type": "color", "default": "#000000",
+          "category": "appearance", "enabled_by": "show_ticks", "group": "Ticks",
+          "help": "Tint colour for the major tick image (set Tint Strength above 0 to apply)."
+        },
+        {
+          "name": "major_tick_image_recolor_opa",
+          "label": "Major Tick Tint Strength",
+          "type": "stepper", "default": 0, "min": 0, "max": 255,
+          "category": "appearance", "enabled_by": "show_ticks", "group": "Ticks",
+          "help": "How strongly to tint the major tick image (0 = none, 255 = full tint colour)."
+        },
+        {
+          "name": "mid_tick_image_recolor",
+          "label": "Medium Tick Tint",
+          "type": "color", "default": "#000000",
+          "category": "appearance", "enabled_by": "show_ticks", "group": "Ticks",
+          "help": "Tint colour for the medium tick image (set Tint Strength above 0 to apply)."
+        },
+        {
+          "name": "mid_tick_image_recolor_opa",
+          "label": "Medium Tick Tint Strength",
+          "type": "stepper", "default": 0, "min": 0, "max": 255,
+          "category": "appearance", "enabled_by": "show_ticks", "group": "Ticks",
+          "help": "How strongly to tint the medium tick image (0 = none, 255 = full tint colour)."
+        },
+        {
+          "name": "minor_tick_image_recolor",
+          "label": "Minor Tick Tint",
+          "type": "color", "default": "#000000",
+          "category": "appearance", "enabled_by": "show_ticks", "group": "Ticks",
+          "help": "Tint colour for the minor tick image (set Tint Strength above 0 to apply)."
+        },
+        {
+          "name": "minor_tick_image_recolor_opa",
+          "label": "Minor Tick Tint Strength",
+          "type": "stepper", "default": 0, "min": 0, "max": 255,
+          "category": "appearance", "enabled_by": "show_ticks", "group": "Ticks",
+          "help": "How strongly to tint the minor tick image (0 = none, 255 = full tint colour)."
+        },
+        {
+          "name": "major_tick_image_offset",
+          "label": "Major Tick Position",
+          "type": "stepper", "default": 0, "min": -60, "max": 60,
+          "category": "appearance", "enabled_by": "show_ticks", "group": "Ticks",
+          "help": "Move the major tick image inward (negative) or outward (positive), in pixels."
+        },
+        {
+          "name": "mid_tick_image_offset",
+          "label": "Medium Tick Position",
+          "type": "stepper", "default": 0, "min": -60, "max": 60,
+          "category": "appearance", "enabled_by": "show_ticks", "group": "Ticks",
+          "help": "Move the medium tick image inward (negative) or outward (positive), in pixels."
+        },
+        {
+          "name": "minor_tick_image_offset",
+          "label": "Minor Tick Position",
+          "type": "stepper", "default": 0, "min": -60, "max": 60,
+          "category": "appearance", "enabled_by": "show_ticks", "group": "Ticks",
+          "help": "Move the minor tick image inward (negative) or outward (positive), in pixels."
+        },
+        {
+          "name": "tick_outline_strength",
+          "label": "Tick Outline",
+          "type": "stepper", "default": 0, "min": 0, "max": 255,
+          "category": "appearance", "enabled_by": "show_ticks", "group": "Ticks",
+          "help": "Draw an outline/glow behind the drawn ticks so they pop (0 = off, 255 = solid). No image needed."
+        },
+        {
+          "name": "tick_outline_color",
+          "label": "Tick Outline Color",
+          "type": "color", "default": "#000000",
+          "category": "appearance", "enabled_by": "show_ticks", "group": "Ticks",
+          "help": "Colour of the tick outline/glow (usually black for a crisp edge)."
+        },
+        {
+          "name": "tick_outline_fade",
+          "label": "Tick Outline Fade",
+          "type": "stepper", "default": 0, "min": 0, "max": 20,
+          "category": "appearance", "enabled_by": "show_ticks", "group": "Ticks",
+          "help": "Soften the outline into a glow (0 = hard edge, higher = wider soft glow)."
         },
         {
           "name": "show_tick_labels",
           "label": "Show Tick Labels",
           "type": "checkbox",
           "default": true,
-          "category": "appearance"
+          "category": "appearance",
+          "group": "Numbers",
+          "help": "Show numbers next to the biggest marks."
         },
         {
-          "name": "ticks_on_top",
-          "label": "Ticks On Top",
-          "type": "checkbox",
-          "default": false,
-          "category": "appearance"
+          "name": "tick_label_font",
+          "label": "Tick Label Font",
+          "type": "font",
+          "default": "",
+          "category": "appearance",
+          "enabled_by": "show_tick_labels",
+          "group": "Numbers",
+          "help": "Text style and size of those numbers."
+        },
+        {
+          "name": "tick_label_color",
+          "label": "Tick Label Color",
+          "type": "color",
+          "default": "#FFFFFF",
+          "category": "appearance",
+          "enabled_by": "show_tick_labels",
+          "night_overridable": true,
+          "group": "Numbers",
+          "help": "Colour of those numbers."
         },
         {
           "name": "label_gap",
@@ -2359,103 +3286,30 @@
           "category": "appearance",
           "min": -150,
           "max": 150,
-          "enabled_by": "show_tick_labels"
-        },
-        {
-          "name": "tick_label_font",
-          "label": "Tick Label Font",
-          "type": "font",
-          "default": "",
-          "category": "appearance",
-          "enabled_by": "show_tick_labels"
-        },
-        {
-          "name": "tick_label_color",
-          "label": "Tick Label Color",
-          "type": "color",
-          "default": "#FFFFFF",
-          "category": "appearance",
           "enabled_by": "show_tick_labels",
-          "night_overridable": true
+          "group": "Numbers",
+          "help": "How far the numbers sit from the marks."
         },
         {
           "name": "tick_label_divisor",
           "label": "Tick Label Divisor",
-          "type": "stepper",
+          "type": "number",
           "default": 1,
           "category": "appearance",
           "min": 1,
           "max": 100000,
-          "enabled_by": "show_tick_labels"
+          "enabled_by": "show_tick_labels",
+          "group": "Numbers",
+          "help": "Shrink the numbers by dividing them. Set 1000 and a 7000 mark just shows '7' - common on rev counters."
         },
         {
-          "name": "show_value_line",
-          "label": "Show Value Line",
+          "name": "ticks_on_top",
+          "label": "Ticks On Top",
           "type": "checkbox",
           "default": false,
-          "category": "appearance"
-        },
-        {
-          "name": "value_line_width",
-          "label": "Value Line Width",
-          "type": "stepper",
-          "default": 4,
           "category": "appearance",
-          "min": 1,
-          "max": 20,
-          "enabled_by": "show_value_line"
-        },
-        {
-          "name": "value_line_color",
-          "label": "Value Line Color",
-          "type": "color",
-          "default": "#FFFFFF",
-          "category": "appearance",
-          "night_overridable": true,
-          "enabled_by": "show_value_line"
-        },
-        {
-          "name": "value_line_r_mod",
-          "label": "Value Line Length Trim",
-          "type": "stepper",
-          "default": -10,
-          "category": "appearance",
-          "min": -50,
-          "max": 50,
-          "enabled_by": "show_value_line"
-        },
-        {
-          "name": "anchor_enabled",
-          "label": "Anchor Curve",
-          "type": "checkbox",
-          "default": false,
-          "category": "data",
-          "_doc": "Anchor-based non-linear scale. \"Pin THIS data value to\nTHIS position on the bar\" - splits the range into two\nlinear segments. e.g. coolant 0-110, anchor=90,\nposition=50 makes 0-90 cover the first half, 90-110\ncover the second half. anchor_enabled=false (default)\n= pure linear."
-        },
-        {
-          "name": "anchor_value",
-          "label": "Anchor Value",
-          "type": "number",
-          "default": 50,
-          "category": "data",
-          "enabled_by": "anchor_enabled"
-        },
-        {
-          "name": "anchor_position",
-          "label": "Anchor Position (%)",
-          "type": "slider",
-          "default": 50,
-          "category": "data",
-          "min": 0,
-          "max": 100,
-          "enabled_by": "anchor_enabled"
-        },
-        {
-          "name": "reverse",
-          "label": "Reverse Direction",
-          "type": "checkbox",
-          "default": false,
-          "category": "data"
+          "group": "Numbers",
+          "help": "Draw the marks and numbers on top of the fill instead of behind it."
         },
         {
           "name": "arc_alerts_enabled",
@@ -2463,18 +3317,20 @@
           "type": "checkbox",
           "default": false,
           "category": "alerts",
-          "group": "arc_alerts"
+          "group": "Alerts",
+          "help": "Change the fill colour when the reading goes too low or too high (set the points below)."
         },
         {
           "name": "arc_low",
           "label": "Low Threshold",
-          "type": "stepper",
+          "type": "number",
           "default": 0,
           "category": "alerts",
-          "group": "arc_alerts",
+          "group": "Alerts",
           "min": -99999,
           "max": 99999,
-          "enabled_by": "arc_alerts_enabled"
+          "enabled_by": "arc_alerts_enabled",
+          "help": "At or below this reading, the fill turns the Low colour."
         },
         {
           "name": "arc_low_color",
@@ -2482,20 +3338,22 @@
           "type": "color",
           "default": "#0000FF",
           "category": "alerts",
-          "group": "arc_alerts",
+          "group": "Alerts",
           "enabled_by": "arc_alerts_enabled",
-          "night_overridable": true
+          "night_overridable": true,
+          "help": "Fill colour when the reading is low."
         },
         {
           "name": "arc_high",
           "label": "High Threshold",
-          "type": "stepper",
+          "type": "number",
           "default": 100,
           "category": "alerts",
-          "group": "arc_alerts",
+          "group": "Alerts",
           "min": -99999,
           "max": 99999,
-          "enabled_by": "arc_alerts_enabled"
+          "enabled_by": "arc_alerts_enabled",
+          "help": "At or above this reading, the fill turns the High colour."
         },
         {
           "name": "arc_high_color",
@@ -2503,32 +3361,10 @@
           "type": "color",
           "default": "#FF0000",
           "category": "alerts",
-          "group": "arc_alerts",
+          "group": "Alerts",
           "enabled_by": "arc_alerts_enabled",
-          "night_overridable": true
-        },
-        {
-          "name": "redline_arc_width",
-          "label": "Redline Thickness",
-          "type": "stepper",
-          "default": 0,
-          "category": "appearance",
-          "min": 0,
-          "max": 50
-        },
-        {
-          "name": "redline_color",
-          "label": "Redline Color",
-          "type": "color",
-          "default": "#FF0000",
-          "category": "appearance"
-        },
-        {
-          "name": "redline_recolor_fill",
-          "label": "Redline Recolors Fill",
-          "type": "checkbox",
-          "default": true,
-          "category": "appearance"
+          "night_overridable": true,
+          "help": "Fill colour when the reading is high."
         }
       ]
     },
@@ -2553,28 +3389,36 @@
           "label": "Label",
           "type": "textarea",
           "default": "",
-          "category": "data"
+          "category": "data",
+          "group": "Text",
+          "help": "Text shown on the switch."
         },
         {
           "name": "show_label",
           "label": "Show Label",
           "type": "checkbox",
           "default": true,
-          "category": "data"
+          "category": "data",
+          "group": "Text",
+          "help": "Show the text."
         },
         {
           "name": "signal_on_threshold",
           "label": "ON Threshold",
           "type": "number",
           "default": 0.5,
-          "category": "data"
+          "category": "data",
+          "group": "Value",
+          "help": "The reading at or above which the switch shows as ON."
         },
         {
           "name": "tx_can_id",
           "label": "CAN ID",
           "type": "can_id",
           "default": 0,
-          "category": "data"
+          "category": "data",
+          "group": "CAN TX",
+          "help": "Advanced: the CAN message ID this switch sends. Leave alone unless you're wiring it to the car's CAN bus."
         },
         {
           "name": "tx_bit_start",
@@ -2582,7 +3426,9 @@
           "type": "select",
           "default": 0,
           "category": "data",
-          "_raw_options": "Array.from({length:64},(_,i)=>({v:i,l:String(i)}))"
+          "_raw_options": "Array.from({length:64},(_,i)=>({v:i,l:String(i)}))",
+          "group": "CAN TX",
+          "help": "Advanced: which bit in the CAN message to set."
         },
         {
           "name": "tx_bit_length",
@@ -2590,7 +3436,9 @@
           "type": "select",
           "default": 1,
           "category": "data",
-          "_raw_options": "Array.from({length:32},(_,i)=>({v:i+1,l:String(i+1)}))"
+          "_raw_options": "Array.from({length:32},(_,i)=>({v:i+1,l:String(i+1)}))",
+          "group": "CAN TX",
+          "help": "Advanced: how many bits to send."
         },
         {
           "name": "tx_endian",
@@ -2599,32 +3447,41 @@
           "default": 1,
           "category": "data",
           "options": [
-            {
-              "value": 0,
-              "label": "Big Endian"
-            },
-            {
-              "value": 1,
-              "label": "Little Endian"
-            }
-          ]
+            { "value": 0, "label": "Big Endian" },
+            { "value": 1, "label": "Little Endian" }
+          ],
+          "group": "CAN TX",
+          "help": "Advanced: byte order of the sent value."
         },
         {
           "name": "tx_rate_hz",
           "label": "TX Rate (Hz)",
           "type": "stepper",
-          "default": 0,
+          "default": 10,
           "category": "data",
           "min": 0,
-          "max": 50
+          "max": 50,
+          "group": "CAN TX",
+          "help": "Advanced: how often the message is resent while ON, per second, as a keepalive (0 = send once on change)."
+        },
+        {
+          "name": "remember_state",
+          "label": "Remember State",
+          "type": "checkbox",
+          "default": false,
+          "category": "data",
+          "group": "CAN TX",
+          "help": "Remember on/off across a reboot so a CAN-controlled output comes back the way you left it."
         },
         {
           "name": "image_name",
           "label": "Image",
           "type": "image_picker",
           "default": "",
-          "category": "appearance",
-          "night_overridable": true
+          "category": "data",
+          "night_overridable": true,
+          "group": "Image",
+          "help": "Icon shown on the switch."
         },
         {
           "name": "active_color",
@@ -2632,15 +3489,9 @@
           "type": "color",
           "default": "#00FF00",
           "category": "appearance",
-          "night_overridable": true
-        },
-        {
-          "name": "inactive_color",
-          "label": "Inactive Color",
-          "type": "color",
-          "default": "#555555",
-          "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Fill",
+          "help": "Colour when ON."
         },
         {
           "name": "active_opa",
@@ -2649,7 +3500,19 @@
           "default": 255,
           "category": "appearance",
           "min": 0,
-          "max": 255
+          "max": 255,
+          "group": "Fill",
+          "help": "How solid it is when ON (0-255)."
+        },
+        {
+          "name": "inactive_color",
+          "label": "Inactive Color",
+          "type": "color",
+          "default": "#555555",
+          "category": "appearance",
+          "night_overridable": true,
+          "group": "Fill",
+          "help": "Colour when OFF."
         },
         {
           "name": "inactive_opa",
@@ -2658,7 +3521,9 @@
           "default": 100,
           "category": "appearance",
           "min": 0,
-          "max": 255
+          "max": 255,
+          "group": "Fill",
+          "help": "How solid it is when OFF (0-255)."
         },
         {
           "name": "label_color",
@@ -2667,7 +3532,9 @@
           "default": "#FFFFFF",
           "category": "appearance",
           "enabled_by": "show_label",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Text",
+          "help": "Text colour."
         },
         {
           "name": "font",
@@ -2675,7 +3542,9 @@
           "type": "font",
           "default": "",
           "category": "appearance",
-          "enabled_by": "show_label"
+          "enabled_by": "show_label",
+          "group": "Text",
+          "help": "Text style and size."
         },
         {
           "name": "label_align",
@@ -2685,19 +3554,12 @@
           "category": "appearance",
           "enabled_by": "show_label",
           "options": [
-            {
-              "value": 0,
-              "label": "Left"
-            },
-            {
-              "value": 1,
-              "label": "Center"
-            },
-            {
-              "value": 2,
-              "label": "Right"
-            }
-          ]
+            { "value": 0, "label": "Left" },
+            { "value": 1, "label": "Center" },
+            { "value": 2, "label": "Right" }
+          ],
+          "group": "Text",
+          "help": "Line the text up left, centre or right."
         },
         {
           "name": "label_x",
@@ -2707,7 +3569,9 @@
           "category": "appearance",
           "min": -400,
           "max": 400,
-          "enabled_by": "show_label"
+          "enabled_by": "show_label",
+          "group": "Text",
+          "help": "Nudge the text left or right."
         },
         {
           "name": "label_y",
@@ -2717,7 +3581,9 @@
           "category": "appearance",
           "min": -240,
           "max": 240,
-          "enabled_by": "show_label"
+          "enabled_by": "show_label",
+          "group": "Text",
+          "help": "Nudge the text up or down."
         }
       ]
     },
@@ -2742,28 +3608,46 @@
           "label": "Label",
           "type": "textarea",
           "default": "BTN",
-          "category": "data"
+          "category": "data",
+          "group": "Value",
+          "help": "Text shown on the button."
         },
         {
           "name": "show_label",
           "label": "Show Label",
           "type": "checkbox",
           "default": true,
-          "category": "data"
+          "category": "data",
+          "group": "Value",
+          "help": "Show the text."
         },
         {
           "name": "latch",
           "label": "Latch (Toggle)",
           "type": "checkbox",
           "default": false,
-          "category": "data"
+          "category": "data",
+          "group": "Behaviour",
+          "help": "Stay on after a press (toggle) instead of only while held. Momentary always sends OFF when you let go."
+        },
+        {
+          "name": "remember_state",
+          "label": "Remember State",
+          "type": "checkbox",
+          "default": false,
+          "category": "data",
+          "enabled_by": "latch",
+          "group": "Behaviour",
+          "help": "Latch only: remember on/off across a reboot so the output comes back the way you left it."
         },
         {
           "name": "tx_can_id",
           "label": "CAN ID",
           "type": "can_id",
           "default": 0,
-          "category": "data"
+          "category": "data",
+          "group": "CAN TX",
+          "help": "Advanced: the CAN message ID this button sends. Leave alone unless wiring it to the car's CAN bus."
         },
         {
           "name": "tx_bit_start",
@@ -2771,7 +3655,9 @@
           "type": "select",
           "default": 0,
           "category": "data",
-          "_raw_options": "Array.from({length:64},(_,i)=>({v:i,l:String(i)}))"
+          "_raw_options": "Array.from({length:64},(_,i)=>({v:i,l:String(i)}))",
+          "group": "CAN TX",
+          "help": "Advanced: which bit in the CAN message to set."
         },
         {
           "name": "tx_bit_length",
@@ -2779,7 +3665,9 @@
           "type": "select",
           "default": 1,
           "category": "data",
-          "_raw_options": "Array.from({length:32},(_,i)=>({v:i+1,l:String(i+1)}))"
+          "_raw_options": "Array.from({length:32},(_,i)=>({v:i+1,l:String(i+1)}))",
+          "group": "CAN TX",
+          "help": "Advanced: how many bits to send."
         },
         {
           "name": "tx_endian",
@@ -2788,40 +3676,22 @@
           "default": 1,
           "category": "data",
           "options": [
-            {
-              "value": 0,
-              "label": "Big Endian"
-            },
-            {
-              "value": 1,
-              "label": "Little Endian"
-            }
-          ]
+            { "value": 0, "label": "Big Endian" },
+            { "value": 1, "label": "Little Endian" }
+          ],
+          "group": "CAN TX",
+          "help": "Advanced: byte order of the sent value."
         },
         {
           "name": "tx_rate_hz",
           "label": "TX Rate (Hz)",
           "type": "stepper",
-          "default": 0,
+          "default": 10,
           "category": "data",
           "min": 0,
-          "max": 50
-        },
-        {
-          "name": "tx_send_release",
-          "label": "Send on Release",
-          "type": "checkbox",
-          "default": false,
-          "category": "data",
-          "enabled_by": "!latch"
-        },
-        {
-          "name": "image_name",
-          "label": "Image",
-          "type": "image_picker",
-          "default": "",
-          "category": "appearance",
-          "night_overridable": true
+          "max": 50,
+          "group": "CAN TX",
+          "help": "Advanced: how often the message is resent while held, per second, as a keepalive (0 = send once). A momentary always sends OFF on release regardless."
         },
         {
           "name": "bg_color",
@@ -2829,7 +3699,9 @@
           "type": "color",
           "default": "#333333",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Fill",
+          "help": "Colour of the button."
         },
         {
           "name": "text_color",
@@ -2837,7 +3709,9 @@
           "type": "color",
           "default": "#FFFFFF",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Fill",
+          "help": "Text colour."
         },
         {
           "name": "pressed_color",
@@ -2845,7 +3719,9 @@
           "type": "color",
           "default": "#555555",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Fill",
+          "help": "Colour while you're pressing it."
         },
         {
           "name": "border_radius",
@@ -2854,7 +3730,9 @@
           "default": 5,
           "category": "appearance",
           "min": 0,
-          "max": 100
+          "max": 100,
+          "group": "Frame",
+          "help": "How rounded the corners are."
         },
         {
           "name": "font",
@@ -2862,7 +3740,9 @@
           "type": "font",
           "default": "",
           "category": "appearance",
-          "enabled_by": "show_label"
+          "enabled_by": "show_label",
+          "group": "Text",
+          "help": "Text style and size."
         },
         {
           "name": "label_align",
@@ -2872,19 +3752,12 @@
           "category": "appearance",
           "enabled_by": "show_label",
           "options": [
-            {
-              "value": 0,
-              "label": "Left"
-            },
-            {
-              "value": 1,
-              "label": "Center"
-            },
-            {
-              "value": 2,
-              "label": "Right"
-            }
-          ]
+            { "value": 0, "label": "Left" },
+            { "value": 1, "label": "Center" },
+            { "value": 2, "label": "Right" }
+          ],
+          "group": "Text",
+          "help": "Line the text up left, centre or right."
         },
         {
           "name": "label_x",
@@ -2894,7 +3767,9 @@
           "category": "appearance",
           "min": -400,
           "max": 400,
-          "enabled_by": "show_label"
+          "enabled_by": "show_label",
+          "group": "Text",
+          "help": "Nudge the text left or right."
         },
         {
           "name": "label_y",
@@ -2904,7 +3779,19 @@
           "category": "appearance",
           "min": -240,
           "max": 240,
-          "enabled_by": "show_label"
+          "enabled_by": "show_label",
+          "group": "Text",
+          "help": "Nudge the text up or down."
+        },
+        {
+          "name": "image_name",
+          "label": "Image",
+          "type": "image_picker",
+          "default": "",
+          "category": "appearance",
+          "night_overridable": true,
+          "group": "Image",
+          "help": "Icon shown on the button."
         }
       ]
     },
@@ -2929,38 +3816,48 @@
           "label": "Signal",
           "type": "text",
           "default": "",
-          "category": "data"
-        },
-        {
-          "name": "led_count",
-          "label": "LED Count",
-          "type": "number",
-          "default": 8,
           "category": "data",
-          "min": 4,
-          "max": 16,
-          "step": 1
+          "group": "Value",
+          "help": "What drives the lights - usually RPM."
         },
         {
           "name": "range_min",
           "label": "Range Min",
           "type": "number",
           "default": 4000,
-          "category": "data"
+          "category": "data",
+          "group": "Value",
+          "help": "The reading where the first light comes on."
         },
         {
           "name": "range_max",
           "label": "Range Max",
           "type": "number",
           "default": 7000,
-          "category": "data"
+          "category": "data",
+          "group": "Value",
+          "help": "The reading where every light is on."
+        },
+        {
+          "name": "led_count",
+          "label": "LED Count",
+          "type": "stepper",
+          "default": 8,
+          "category": "data",
+          "min": 4,
+          "max": 45,
+          "step": 1,
+          "group": "Value",
+          "help": "How many lights in the row."
         },
         {
           "name": "flash_threshold",
           "label": "Flash RPM",
           "type": "number",
           "default": 7200,
-          "category": "data"
+          "category": "data",
+          "group": "Behaviour",
+          "help": "The reading where the whole row flashes - your shift point."
         },
         {
           "name": "flash_speed",
@@ -2970,7 +3867,22 @@
           "category": "data",
           "min": 50,
           "max": 1000,
-          "step": 10
+          "step": 10,
+          "group": "Behaviour",
+          "help": "How fast it flashes (smaller = faster), in milliseconds."
+        },
+        {
+          "name": "fill_mode",
+          "label": "Fill Direction",
+          "type": "select",
+          "default": 0,
+          "category": "data",
+          "options": [
+            { "value": 0, "label": "Left to Right" },
+            { "value": 1, "label": "Outside In" }
+          ],
+          "group": "Behaviour",
+          "help": "How the lights fill up as the reading rises."
         },
         {
           "name": "color_low",
@@ -2978,7 +3890,9 @@
           "type": "color",
           "default": "#00FF00",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Fill",
+          "help": "Colour of the first (low) lights."
         },
         {
           "name": "color_mid",
@@ -2986,7 +3900,9 @@
           "type": "color",
           "default": "#FFFF00",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Fill",
+          "help": "Colour of the middle lights."
         },
         {
           "name": "color_high",
@@ -2994,7 +3910,9 @@
           "type": "color",
           "default": "#FF0000",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Fill",
+          "help": "Colour of the top lights."
         },
         {
           "name": "color_off",
@@ -3002,7 +3920,33 @@
           "type": "color",
           "default": "#212121",
           "category": "appearance",
-          "night_overridable": true
+          "night_overridable": true,
+          "group": "Fill",
+          "help": "Colour of lights that are off."
+        },
+        {
+          "name": "threshold_mid",
+          "label": "Mid Threshold",
+          "type": "number",
+          "default": 0.5,
+          "category": "appearance",
+          "min": 0,
+          "max": 1,
+          "step": 0.05,
+          "group": "Fill",
+          "help": "The reading where the lights switch to the middle colour."
+        },
+        {
+          "name": "threshold_high",
+          "label": "High Threshold",
+          "type": "number",
+          "default": 0.8,
+          "category": "appearance",
+          "min": 0,
+          "max": 1,
+          "step": 0.05,
+          "group": "Fill",
+          "help": "The reading where the lights switch to the top colour."
         },
         {
           "name": "led_spacing",
@@ -3012,17 +3956,9 @@
           "category": "appearance",
           "min": 0,
           "max": 200,
-          "step": 1
-        },
-        {
-          "name": "border_radius",
-          "label": "Corner Radius",
-          "type": "stepper",
-          "default": 2,
-          "category": "appearance",
-          "min": 0,
-          "max": 255,
-          "step": 1
+          "step": 1,
+          "group": "Layout",
+          "help": "Gap between the lights."
         },
         {
           "name": "led_width",
@@ -3032,7 +3968,9 @@
           "category": "appearance",
           "min": 0,
           "max": 100,
-          "step": 1
+          "step": 1,
+          "group": "Layout",
+          "help": "How wide each light is (0 = fit automatically)."
         },
         {
           "name": "led_height",
@@ -3042,44 +3980,433 @@
           "category": "appearance",
           "min": 0,
           "max": 100,
-          "step": 1
+          "step": 1,
+          "group": "Layout",
+          "help": "How tall each light is (0 = fit automatically)."
         },
         {
-          "name": "fill_mode",
-          "label": "Fill Direction",
-          "type": "select",
+          "name": "border_radius",
+          "label": "Corner Radius",
+          "type": "stepper",
+          "default": 2,
+          "category": "appearance",
+          "min": 0,
+          "max": 255,
+          "step": 1,
+          "group": "Layout",
+          "help": "How rounded each light's corners are."
+        }
+      ]
+    },
+    {
+      "name": "pathbar",
+      "display_name": "Path Bar",
+      "singleton": false,
+      "default_size": {
+        "w": 400,
+        "h": 260
+      },
+      "constraints": {
+        "min_w": 20,
+        "min_h": 20,
+        "max_w": "screen_w",
+        "max_h": "screen_h"
+      },
+      "fields": [
+        {
+          "name": "min",
+          "label": "Min Value",
+          "type": "number",
           "default": 0,
           "category": "data",
+          "group": "Value",
+          "help": "The reading at the start of the bar."
+        },
+        {
+          "name": "max",
+          "label": "Max Value",
+          "type": "number",
+          "default": 11000,
+          "category": "data",
+          "group": "Value",
+          "help": "The reading at the end of the bar."
+        },
+        {
+          "name": "redline",
+          "label": "Redline",
+          "type": "number",
+          "default": 10000,
+          "category": "data",
+          "group": "Value",
+          "help": "The reading where the warning zone starts along the bar."
+        },
+        {
+          "name": "lit_color",
+          "label": "Fill Color",
+          "type": "color",
+          "default": "#2EE4C8",
+          "category": "appearance",
+          "group": "Fill",
+          "help": "Colour of the filled part."
+        },
+        {
+          "name": "dim_color",
+          "label": "Track Color",
+          "type": "color",
+          "default": "#2E323A",
+          "category": "appearance",
+          "group": "Fill",
+          "help": "Colour of the empty part."
+        },
+        {
+          "name": "dim_opa",
+          "label": "Track Opacity",
+          "type": "stepper",
+          "default": 90,
+          "category": "appearance",
+          "min": 0,
+          "max": 255,
+          "group": "Fill",
+          "help": "How see-through the empty part is (0-255)."
+        },
+        {
+          "name": "band_width",
+          "label": "Band Width",
+          "type": "stepper",
+          "default": 22,
+          "category": "appearance",
+          "min": 2,
+          "max": 80,
+          "group": "Fill",
+          "help": "How thick the bar is."
+        },
+        {
+          "name": "rounded",
+          "label": "Rounded Caps",
+          "type": "checkbox",
+          "default": true,
+          "category": "appearance",
+          "group": "Fill",
+          "help": "Round the bar's ends."
+        },
+        {
+          "name": "fade_fill",
+          "label": "Fade Fill",
+          "type": "checkbox",
+          "default": false,
+          "category": "appearance",
+          "help": "Fade the colour from dim to bright along the filled part, for a glowing look.",
+          "group": "Fill"
+        },
+        {
+          "name": "lead_edge_enabled",
+          "label": "Leading Edge",
+          "type": "checkbox",
+          "default": true,
+          "category": "appearance",
+          "help": "Add a bright tip at the current reading, like a glowing bar end.",
+          "group": "Fill"
+        },
+        {
+          "name": "lead_edge_color",
+          "label": "Leading Edge Color",
+          "type": "color",
+          "default": "#E6FAFF",
+          "category": "appearance",
+          "enabled_by": "lead_edge_enabled",
+          "group": "Fill",
+          "help": "Colour of that bright tip."
+        },
+        {
+          "name": "lead_edge_width",
+          "label": "Leading Edge Width",
+          "type": "stepper",
+          "default": 6,
+          "min": 0,
+          "max": 40,
+          "category": "appearance",
+          "enabled_by": "lead_edge_enabled",
+          "group": "Fill",
+          "help": "How wide the bright tip is."
+        },
+        {
+          "name": "redline_color",
+          "label": "Redline Color",
+          "type": "color",
+          "default": "#FF5C32",
+          "category": "appearance",
+          "group": "Redline",
+          "help": "Colour of the warning zone."
+        },
+        {
+          "name": "redline_recolor_ticks",
+          "label": "Recolor Ticks Past Redline",
+          "type": "checkbox",
+          "default": true,
+          "category": "appearance",
+          "enabled_by": "show_ticks",
+          "group": "Redline",
+          "help": "Turn the marks inside the warning zone that colour too."
+        },
+        {
+          "name": "shape",
+          "label": "Shape",
+          "type": "select",
+          "default": 1,
+          "category": "appearance",
           "options": [
-            {
-              "value": 0,
-              "label": "Left to Right"
-            },
-            {
-              "value": 1,
-              "label": "Outside In"
-            }
-          ]
+            { "value": 0, "label": "Custom" },
+            { "value": 1, "label": "L-Bend" },
+            { "value": 2, "label": "Straight" },
+            { "value": 3, "label": "45° Bend" },
+            { "value": 4, "label": "J-Hook" }
+          ],
+          "help": "Pick a ready-made shape (straight, L-bend, 45°, or the curved J-hook tacho) sized to fit the box, or Custom to draw your own path.",
+          "group": "Shape"
         },
         {
-          "name": "threshold_mid",
-          "label": "Mid Threshold",
-          "type": "number",
-          "default": 0.5,
-          "category": "thresholds",
-          "min": 0,
-          "max": 1,
-          "step": 0.05
+          "name": "orientation",
+          "label": "Orientation",
+          "type": "select",
+          "default": 0,
+          "category": "appearance",
+          "options": [
+            { "value": 0, "label": "Top-Left / Horizontal" },
+            { "value": 1, "label": "Top-Right / Vertical" },
+            { "value": 2, "label": "Bottom-Left" },
+            { "value": 3, "label": "Bottom-Right" }
+          ],
+          "group": "Shape",
+          "help": "Which way the bar runs and fills."
         },
         {
-          "name": "threshold_high",
-          "label": "High Threshold",
-          "type": "number",
-          "default": 0.8,
-          "category": "thresholds",
+          "name": "corner_radius",
+          "label": "Corner Radius",
+          "type": "stepper",
+          "default": 40,
+          "category": "appearance",
           "min": 0,
-          "max": 1,
-          "step": 0.05
+          "max": 400,
+          "group": "Shape",
+          "help": "How big the rounded corner of the bend is (or the bevel, on the 45° shape).",
+          "enabled_by": "shape=1,3"
+        },
+        {
+          "name": "hook_angle",
+          "label": "Hook Sweep",
+          "type": "stepper",
+          "default": 120,
+          "category": "appearance",
+          "min": 30,
+          "max": 200,
+          "step": 5,
+          "help": "J-hook shape only: how far the curve sweeps. 90 is a quarter turn, 180 a half turn.",
+          "group": "Shape",
+          "enabled_by": "shape=4"
+        },
+        {
+          "name": "smooth",
+          "label": "Smooth Curve",
+          "type": "checkbox",
+          "default": false,
+          "category": "appearance",
+          "help": "Custom shapes only: smooth your drawn points into a flowing curve.",
+          "group": "Shape",
+          "enabled_by": "shape=0"
+        },
+        {
+          "name": "show_ticks",
+          "label": "Show Scale",
+          "type": "checkbox",
+          "default": false,
+          "category": "data",
+          "_doc": "Draw a tick + number scale that FOLLOWS the path (spaced by\narc-length so the marks line up with the fill). Turns a bare\npathbar into a Ford-style swept tach.",
+          "group": "Ticks",
+          "help": "Show marks along the bar."
+        },
+        {
+          "name": "major_tick_step",
+          "label": "Major Tick Value Spacing",
+          "type": "number",
+          "default": 0,
+          "category": "appearance",
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "How far apart the biggest marks are, in reading value."
+        },
+        {
+          "name": "minor_tick_step",
+          "label": "Minor Tick Value Spacing",
+          "type": "number",
+          "default": 0,
+          "category": "appearance",
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "How far apart the smaller marks are. 0 turns them off."
+        },
+        {
+          "name": "major_tick_width",
+          "label": "Major Tick Width",
+          "type": "stepper",
+          "default": 3,
+          "category": "appearance",
+          "min": 0,
+          "max": 40,
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "How thick the biggest marks are."
+        },
+        {
+          "name": "tick_width",
+          "label": "Minor Tick Width",
+          "type": "stepper",
+          "default": 2,
+          "category": "appearance",
+          "min": 0,
+          "max": 40,
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "How thick the smaller marks are."
+        },
+        {
+          "name": "major_tick_len",
+          "label": "Major Tick Length",
+          "type": "stepper",
+          "default": 16,
+          "category": "appearance",
+          "min": 0,
+          "max": 100,
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "How long the biggest marks are."
+        },
+        {
+          "name": "tick_len",
+          "label": "Minor Tick Length",
+          "type": "stepper",
+          "default": 10,
+          "category": "appearance",
+          "min": 0,
+          "max": 100,
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "How long the smaller marks are."
+        },
+        {
+          "name": "major_tick_color",
+          "label": "Major Tick Color",
+          "type": "color",
+          "default": "#FFFFFF",
+          "category": "appearance",
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "Colour of the biggest marks."
+        },
+        {
+          "name": "tick_color",
+          "label": "Minor Tick Color",
+          "type": "color",
+          "default": "#9E9E9E",
+          "category": "appearance",
+          "enabled_by": "show_ticks",
+          "group": "Ticks",
+          "help": "Colour of the smaller marks."
+        },
+        {
+          "name": "show_labels",
+          "label": "Show Numbers",
+          "type": "checkbox",
+          "default": false,
+          "category": "data",
+          "enabled_by": "show_ticks",
+          "group": "Numbers",
+          "help": "Show numbers next to the biggest marks."
+        },
+        {
+          "name": "label_font",
+          "label": "Number Font",
+          "type": "font",
+          "default": "",
+          "category": "appearance",
+          "enabled_by": "show_labels",
+          "group": "Numbers",
+          "help": "Text style and size of those numbers."
+        },
+        {
+          "name": "label_color",
+          "label": "Number Color",
+          "type": "color",
+          "default": "#FFFFFF",
+          "category": "appearance",
+          "enabled_by": "show_labels",
+          "group": "Numbers",
+          "help": "Colour of those numbers."
+        },
+        {
+          "name": "label_gap",
+          "label": "Number Gap",
+          "type": "stepper",
+          "default": 14,
+          "category": "appearance",
+          "min": -200,
+          "max": 200,
+          "enabled_by": "show_labels",
+          "group": "Numbers",
+          "help": "How far the numbers sit from the bar."
+        },
+        {
+          "name": "label_side",
+          "label": "Number Side",
+          "type": "select",
+          "default": 0,
+          "options": [
+            { "value": 0, "label": "Auto" },
+            { "value": 1, "label": "Side A" },
+            { "value": 2, "label": "Side B" }
+          ],
+          "category": "appearance",
+          "enabled_by": "show_labels",
+          "_doc": "Auto faces the path's inside (good for a smooth curve). On a\nsharp/multi-corner path Auto can flip side at the bends — pick\nSide A or B to lock every number to one consistent side.",
+          "group": "Numbers",
+          "help": "Which side of the bar the numbers sit on. Auto picks per number (can flip on sharp paths); Side A/B locks them all to one side."
+        },
+        {
+          "name": "label_along_offset",
+          "label": "Number Slide",
+          "type": "stepper",
+          "default": 0,
+          "category": "appearance",
+          "min": -400,
+          "max": 400,
+          "enabled_by": "show_labels",
+          "_doc": "Shifts every number ALONG the path (by arc-length px), so you\ncan nudge them off the tick toward the start/end of the bar.",
+          "group": "Numbers",
+          "help": "Slide the numbers along the bar (negative = toward the start, positive = toward the end)."
+        },
+        {
+          "name": "tick_label_divisor",
+          "label": "Number Divisor",
+          "type": "number",
+          "default": 1,
+          "category": "data",
+          "min": 1,
+          "max": 100000,
+          "enabled_by": "show_labels",
+          "_doc": "Divides each number by this factor — e.g. 1000 turns a\n0..8000 tach into 0..8 (print the unit elsewhere).",
+          "group": "Numbers",
+          "help": "Shrink the numbers by dividing them (1000 shows 7000 as '7')."
+        },
+        {
+          "name": "smoothing_ms",
+          "label": "Smoothing (ms)",
+          "type": "slider",
+          "default": 40,
+          "category": "data",
+          "min": 0,
+          "max": 500,
+          "step": 10,
+          "group": "Behaviour",
+          "help": "Smooths out jumpy readings. Higher is smoother but slower to react; 0 shows the raw value."
         }
       ]
     }

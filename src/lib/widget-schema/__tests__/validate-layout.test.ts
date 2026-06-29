@@ -122,6 +122,31 @@ describe("validateLayout — happy path", () => {
     });
     expect(r.ok).toBe(true);
   });
+
+  it("accepts a pathbar widget (firmware widget-sys / VK Calais)", () => {
+    const r = validateLayout({
+      schema_version: 14,
+      widgets: [
+        {
+          type: "pathbar",
+          id: "pathbar_0",
+          x: 0,
+          y: 0,
+          w: 400,
+          h: 260,
+          config: {
+            min: 0,
+            max: 11000,
+            redline: 10000,
+            band_width: 22,
+            dim_opa: 90,
+            rounded: true,
+          },
+        },
+      ],
+    });
+    expect(r.ok).toBe(true);
+  });
 });
 
 /* ------------------------------------------------------------------ */
@@ -464,7 +489,7 @@ describe("validateLayoutString", () => {
 /* ------------------------------------------------------------------ */
 
 describe("knownWidgetTypes", () => {
-  it("returns all 15 widget types from the schema", () => {
+  it("returns all 16 widget types from the schema", () => {
     const types = knownWidgetTypes();
     expect(types).toContain("panel");
     expect(types).toContain("rpm_bar");
@@ -481,6 +506,7 @@ describe("knownWidgetTypes", () => {
     expect(types).toContain("toggle");
     expect(types).toContain("button");
     expect(types).toContain("shift_light");
-    expect(types.length).toBe(15);
+    expect(types).toContain("pathbar");
+    expect(types.length).toBe(16);
   });
 });

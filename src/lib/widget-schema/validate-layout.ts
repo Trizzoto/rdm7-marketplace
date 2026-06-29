@@ -106,6 +106,7 @@ interface SchemaField {
   default: unknown;
   category?: string;
   group?: string;
+  help?: string;
   enabled_by?: string;
   inline?: string;
   night_overridable?: boolean;

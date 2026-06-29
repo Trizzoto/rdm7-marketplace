@@ -5,8 +5,8 @@ firmware repo (`RDM-7_Dash`).
 
 | Source repo | `RDM-7_Dash` |
 | Source path | `schema/widgets.schema.json`, `schema/widgets.schema.meta.json` |
-| Source commit | **working-tree** of `feature/widget-sys` (HEAD `85aad313c982d85db3bfd600ba5d10cc5afd18eb`; `schema/widgets.schema.json` had an uncommitted in-progress edit at vendor time — adds panel `unit_size`. Re-vendor adds panel `text_align`/`show_unit`/`unit_size`, meter `needle_inner_radius`/`bake_into_gauge`, arc `tick_min`/`tick_max`/`mid_tick_*`/`ticks_on_top`/`signal_min`/`signal_max`/`redline_*`, still schema v14) |
-| Vendored on | 2026-06-13 |
+| Source commit | `feature/widget-sys` HEAD `a0a210b3d0a4d7541fe0eb3bb361e1b7e8d67592` (schema last touched by `bbb60d2` — "pathbar number-positioning controls + VK Calais VFD cluster"). Adds the **`pathbar`** widget (16 total); new fields across existing widgets (`smoothing_ms`, `fill_dir`, meter/arc tick-image controls, `remember_state`, panel `peak_*`, warning `image_scale`, …); a per-field **`help`** tooltip key (meta-schema updated to allow it); richer `enabled_by` grammar (`field=a,b`, `&` AND). Still schema_version 1 / layout schema v14. |
+| Vendored on | 2026-06-30 |
 
 ## Updating
 
