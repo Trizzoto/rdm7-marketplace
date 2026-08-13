@@ -1,12 +1,16 @@
 /**
- * Regenerates the site icons from public/rdm-logo.png.
+ * Regenerates the site icons from public/rdm-logo-hires.png.
  *
  *   node scripts/generate-icons.js
  *
  * Outputs:
  *   src/app/favicon.ico       16 / 32 / 48 px (PNG-in-ICO) — browser tabs
- *   src/app/apple-icon.png    180 px, opaque — iOS home screen
+ *   src/app/apple-icon.png    180 px — iOS home screen
  *   public/rdm-icon-512.png   512 px — Open Graph / social share
+ *
+ * The full RDM lockup (red block + "REALTIME DATA MONITORING") on a black
+ * square. The tagline is white on transparent, so black is what makes it
+ * readable — on the old red tile it was invisible.
  *
  * Uses sharp, which ships as a Next.js dependency — no extra install needed.
  */
@@ -16,50 +20,34 @@ const sharp = require("sharp");
 
 const ROOT = path.resolve(__dirname, "..");
 const APP = path.join(ROOT, "src/app");
-const RED = "#e01616"; // sampled from the logo's red field
+const BG = "#000000";
+const FILL = 0.96; // share of the tile width the logo occupies
 
 (async () => {
-  // 1. Trim the transparent padding off the wordmark.
-  const trimmed = await sharp(path.join(ROOT, "public/rdm-logo.png"))
+  // Trim the transparent surround so the lockup itself drives the fit.
+  const mark = await sharp(path.join(ROOT, "public/rdm-logo-hires.png"))
     .trim({ threshold: 10 })
     .toBuffer();
-  const t = await sharp(trimmed).raw().toBuffer({ resolveWithObject: true });
-  const { width: tw, height: th, channels: tc } = t.info;
+  const { width: mw, height: mh } = await sharp(mark).metadata();
+  console.log(`lockup ${mw}x${mh}`);
 
-  // The logo is the RDM block stacked over a "REAL-TIME DATA MONITORING"
-  // tagline, separated by a blank row. That tagline is illegible below ~48px
-  // and shrinks the letters, so cut at the first fully-transparent row and
-  // keep the block only.
-  let cut = th;
-  for (let y = 1; y < th; y++) {
-    let opaque = 0;
-    for (let x = 0; x < tw; x++) if (t.data[(y * tw + x) * tc + 3] >= 40) opaque++;
-    if (opaque === 0) { cut = y; break; }
-  }
-  const mark = await sharp(trimmed)
-    .extract({ left: 0, top: 0, width: tw, height: cut })
-    .toBuffer();
-  const markMeta = await sharp(mark).metadata();
-  console.log(`logo ${tw}x${th} -> block ${tw}x${cut}`);
-
-  // 2. Master tile: red rounded square with the wordmark centred. The mark's
-  //    own red field merges into the tile, leaving white RDM on solid red.
+  // Master tile: black square, logo centred at FILL of the width.
   const S = 512;
-  const markW = Math.round(S * 0.86);
-  const markH = Math.round((markMeta.height / markMeta.width) * markW);
-  const tile = Buffer.from(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}">` +
-      `<rect width="${S}" height="${S}" rx="${Math.round(S * 0.18)}" ry="${Math.round(S * 0.18)}" fill="${RED}"/>` +
-      `</svg>`
-  );
-  const master = await sharp(tile)
+  const w = Math.round(S * FILL);
+  const h = Math.round((mh / mw) * w);
+  const master = await sharp({
+    create: { width: S, height: S, channels: 4, background: BG },
+  })
     .composite([
-      { input: await sharp(mark).resize(markW, markH, { kernel: "lanczos3" }).toBuffer(), gravity: "centre" },
+      {
+        input: await sharp(mark).resize(w, h, { kernel: "lanczos3" }).toBuffer(),
+        gravity: "centre",
+      },
     ])
     .png()
     .toBuffer();
 
-  // 3. Pack 16/32/48 into a PNG-in-ICO container.
+  // Pack 16/32/48 into a PNG-in-ICO container.
   const sizes = [16, 32, 48];
   const pngs = await Promise.all(
     sizes.map((s) =>
@@ -86,17 +74,37 @@ const RED = "#e01616"; // sampled from the logo's red field
   fs.writeFileSync(path.join(APP, "favicon.ico"), Buffer.concat([header, ...entries, ...pngs]));
   console.log(`src/app/favicon.ico (${sizes.join("/")}px, ${offset} bytes)`);
 
-  // 4. iOS home screen — flattened, since iOS does not honour transparency.
   await sharp(master)
     .resize(180, 180, { kernel: "lanczos3" })
-    .flatten({ background: RED })
+    .flatten({ background: BG })
     .png({ compressionLevel: 9 })
     .toFile(path.join(APP, "apple-icon.png"));
   console.log("src/app/apple-icon.png (180px)");
 
-  // 5. Social share image.
   await sharp(master)
     .png({ compressionLevel: 9 })
     .toFile(path.join(ROOT, "public/rdm-icon-512.png"));
   console.log("public/rdm-icon-512.png (512px)");
+
+  // Zoomed strip for eyeballing the small sizes.
+  if (process.env.ICON_PREVIEW) {
+    const z = 8;
+    const gap = 16;
+    const blown = await Promise.all(
+      sizes.map((s, i) => sharp(pngs[i]).resize(s * z, s * z, { kernel: "nearest" }).toBuffer())
+    );
+    const totalW = sizes.reduce((a, s) => a + s * z + gap, gap);
+    const totalH = 48 * z + gap * 2;
+    let x = gap;
+    const comps = blown.map((b, i) => {
+      const c = { input: b, left: x, top: Math.round((totalH - sizes[i] * z) / 2) };
+      x += sizes[i] * z + gap;
+      return c;
+    });
+    await sharp({ create: { width: totalW, height: totalH, channels: 4, background: "#3a3a3a" } })
+      .composite(comps)
+      .png()
+      .toFile(process.env.ICON_PREVIEW);
+    console.log(`preview -> ${process.env.ICON_PREVIEW}`);
+  }
 })();
