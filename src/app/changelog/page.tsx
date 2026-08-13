@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Changelog | RDM-7 Marketplace",
+  title: "Changelog",
   description: "See what's new on the RDM-7 Marketplace. Platform updates, new features, and improvements.",
 };
 

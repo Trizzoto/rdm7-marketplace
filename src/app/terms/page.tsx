@@ -1,3 +1,10 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Terms of Service",
+  description: "The terms that govern use of the RDM-7 Marketplace, including publishing and purchasing.",
+};
+
 export default function TermsPage() {
   return (
     <div className="max-w-3xl mx-auto">

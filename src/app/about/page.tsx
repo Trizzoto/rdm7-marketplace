@@ -4,7 +4,7 @@ import { HowItWorks } from "@/components/HowItWorks";
 import { CommunityCTA } from "@/components/CommunityCTA";
 
 export const metadata: Metadata = {
-  title: "About | RDM-7 Marketplace",
+  title: "About",
   description: "Learn about the RDM-7 Marketplace — how it works, how to publish layouts, and community guidelines.",
 };
 

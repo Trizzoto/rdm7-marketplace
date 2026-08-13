@@ -4,7 +4,7 @@ import { LayoutCard } from "@/components/LayoutCard";
 import type { Layout } from "@/lib/supabase";
 
 export const metadata: Metadata = {
-  title: "New Arrivals | RDM-7 Marketplace",
+  title: "New Arrivals",
   description: "Browse the latest dashboard layouts and DBC files published on the RDM-7 Marketplace.",
 };
 

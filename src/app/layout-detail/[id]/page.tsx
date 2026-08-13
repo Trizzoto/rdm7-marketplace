@@ -1,5 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { notFound } from "next/navigation";
+import { cache } from "react";
+import type { Metadata } from "next";
 import type { Layout, LayoutVersion } from "@/lib/supabase";
 import { BuyButton } from "@/components/BuyButton";
 import { RatingSection } from "@/components/RatingSection";
@@ -7,13 +9,58 @@ import Link from "next/link";
 
 export const revalidate = 30;
 
-async function getLayout(id: string): Promise<Layout | null> {
+// cache() dedupes the lookup between generateMetadata and the page render.
+const getLayout = cache(async (id: string): Promise<Layout | null> => {
   const { data } = await supabase
     .from("layouts")
     .select("*, profiles(display_name, avatar_url)")
     .eq("id", id)
     .single();
   return data as Layout | null;
+});
+
+const ITEM_LABEL = {
+  layout: "Dashboard Layout",
+  dbc: "DBC File",
+  splash: "Splash Screen",
+} as const;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const layout = await getLayout(id);
+  if (!layout) return { title: "Not Found" };
+
+  const kind = ITEM_LABEL[layout.item_type] ?? "Layout";
+  const author = layout.profiles?.display_name;
+  const title = author ? `${layout.name} by ${author}` : layout.name;
+
+  const summary = layout.description?.replace(/\s+/g, " ").trim();
+  const description = summary
+    ? summary.length > 200
+      ? `${summary.slice(0, 197)}...`
+      : summary
+    : `${kind} for the RDM-7 digital dash${author ? `, published by ${author}` : ""}. ` +
+      `${layout.downloads} download${layout.downloads === 1 ? "" : "s"} on the RDM-7 Marketplace.`;
+
+  const images = layout.screenshot_url
+    ? [{ url: layout.screenshot_url, alt: layout.name }]
+    : undefined;
+
+  return {
+    title,
+    description,
+    openGraph: { type: "article", title, description, images },
+    twitter: {
+      card: images ? "summary_large_image" : "summary",
+      title,
+      description,
+      images: layout.screenshot_url ? [layout.screenshot_url] : undefined,
+    },
+  };
 }
 
 async function getVersionHistory(layoutId: string): Promise<LayoutVersion[]> {
