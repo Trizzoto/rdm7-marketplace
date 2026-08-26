@@ -11,7 +11,7 @@
  * No server-side API — pure Supabase RLS + trigger.
  */
 
-import { supabase } from "@/lib/supabase";
+import { supabase, SUPABASE_URL } from "@/lib/supabase";
 import { useState } from "react";
 
 type Props = {
@@ -106,7 +106,7 @@ export function UploadNewVersion({ layoutId, layoutName, currentVersion, authorI
       /* See UploadForm for full explanation: must refresh via raw fetch
        * to /auth/v1/token because supabase.auth.refreshSession() returns
        * the cached (possibly server-revoked) token. */
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      const supabaseUrl = SUPABASE_URL;
       const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData.session?.refresh_token) {

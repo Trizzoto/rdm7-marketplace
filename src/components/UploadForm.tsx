@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase, SUPABASE_URL } from "@/lib/supabase";
 import { showToast } from "@/components/Toast";
 import { validateLayout } from "@/lib/widget-schema";
 import { studioCaptureUrl, studioPreviewUrl, studioBase } from "@/lib/studio";
@@ -389,7 +389,7 @@ export function UploadForm({
     }
 
     try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      const supabaseUrl = SUPABASE_URL;
       const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
       /* CRITICAL — supabase.auth.refreshSession() returns the cached

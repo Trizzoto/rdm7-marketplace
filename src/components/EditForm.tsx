@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase, SUPABASE_URL } from "@/lib/supabase";
 import type { Layout } from "@/lib/supabase";
 import { UploadNewVersion } from "./UploadNewVersion";
 
@@ -53,7 +53,7 @@ export function EditForm({
        * cached access_token if not expired, but storage may have already
        * revoked it. Manual refresh via /auth/v1/token guarantees a fresh
        * token that storage will accept. */
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      const supabaseUrl = SUPABASE_URL;
       const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData.session?.refresh_token) {

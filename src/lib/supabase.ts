@@ -1,9 +1,16 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+/* Whitespace in the project URL is not cosmetic — it gets BAKED INTO the rows.
+ * A trailing newline on the deployed env var put one inside every stored
+ * rdm_url and screenshot_url ("…supabase.co\n/storage/v1/…"). Browsers strip
+ * newlines out of URLs before fetching, so the site looked fine, while
+ * anything that does not strip them — a server-side fetch, curl, reqwest in
+ * the desktop app, or the value re-encoded as %0A into a deep link — got
+ * "bad hostname". Trim once, here, so no env value can poison the data again. */
+export const SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\s+/g, "");
+const supabaseAnonKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "").trim();
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(SUPABASE_URL, supabaseAnonKey);
 
 export type Layout = {
   id: string;
